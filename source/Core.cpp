@@ -1,3 +1,4 @@
+
 #include "Core.h"
 #include <stdlib.h>
 
@@ -25,10 +26,16 @@ bool Core::removeSensorFromList(Sensor s, list<Sensor> sensorList) {
     return false;
 };
 
-bool Core::isAlarmReady() {
-    list<Sensor>::iterator it = std::find_if(activeSensorList.begin(), activeSensorList.end(), [](Sensor s) {return !s.isSensorReady();});
-    if(it != activeSensorList.end())
-        return true;
+//TEST
+//Return true if alarm is activatable, false otherwise
+bool Core::isAlarmReady(AlarmType at) {
+    switch(at) {
+        case COMPLETE:
+            list<Sensor>::iterator it = std::find_if(activeSensorList.begin(), activeSensorList.end(), [](Sensor s) {return !s.isSensorReady();});
+            if(it == activeSensorList.end())
+                return true;
+            break;
+    }
     return false;
 }
 

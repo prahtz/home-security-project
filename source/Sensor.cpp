@@ -12,3 +12,10 @@ int Sensor::getSensorID() {
 State Sensor::getSensorState() {
     return sensorState;
 }
+
+//TEST
+bool Sensor::isSensorReady() {
+    if(sensorState == CLOSED)
+        return true;
+    return false;
+}

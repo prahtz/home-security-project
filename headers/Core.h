@@ -11,7 +11,7 @@ class Core{
         bool alarmActivated;
         list<Sensor> activeSensorList;
         list<Sensor> knownSensorList;
-        bool isAlarmReady();
+        
     public:
         Core() {this->alarmActivated = false;};
         Core(list <Sensor> activeSensorList, list<Sensor> knownSensorList);
@@ -19,5 +19,5 @@ class Core{
         bool removeSensorFromList(Sensor s, list<Sensor> sensorList);
         void sensorEventHandler(SensorEvent se);
         void activateAlarm(AlarmType at);
-        
+        bool isAlarmReady(AlarmType at);
 };

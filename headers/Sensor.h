@@ -9,5 +9,6 @@ class Sensor {
         Sensor(int sensorID, State sensorState);
         int getSensorID();
         State getSensorState();
-        virtual bool isSensorReady();
+        bool isSensorReady();
+        /*virtual bool isSensorReady();*/
 };
