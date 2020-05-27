@@ -3,6 +3,9 @@
 #include <algorithm>
 #include "SensorEvent.h"
 #include "AlarmType.h"
+#include "Receiver.h"
+
+#define PIN 27
 
 using namespace std;
 
@@ -11,7 +14,6 @@ class Core{
         bool alarmActivated;
         list<Sensor> activeSensorList;
         list<Sensor> knownSensorList;
-        
     public:
         Core() {this->alarmActivated = false;};
         Core(list <Sensor> activeSensorList, list<Sensor> knownSensorList);
@@ -20,4 +22,5 @@ class Core{
         void sensorEventHandler(SensorEvent se);
         void activateAlarm(AlarmType at);
         bool isAlarmReady(AlarmType at);
+        void registerNewSensor();
 };

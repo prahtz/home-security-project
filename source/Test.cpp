@@ -28,6 +28,7 @@ void testRemoveSensorFromList() {
 }
 
 void testIsAlarmReady() {
+    Sensor u();
     Sensor x(0, CLOSED);
     Sensor s(1, CLOSED);
     Sensor f(3, CLOSED);

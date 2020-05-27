@@ -39,3 +39,8 @@ bool Core::isAlarmReady(AlarmType at) {
     return false;
 }
 
+void Core::registerNewSensor() {
+    Receiver receiver(PIN);
+    receiver.startReceiving();
+}
+

@@ -5,7 +5,7 @@ class Sensor {
         int sensorID;
         State sensorState;
     public:
-        Sensor(){};
+        inline Sensor(){};
         Sensor(int sensorID, State sensorState);
         int getSensorID();
         State getSensorState();
