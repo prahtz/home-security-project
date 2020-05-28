@@ -1,11 +1,14 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
+#include <thread>
+#include <exception>
 #include "SensorEvent.h"
 #include "AlarmType.h"
 #include "Receiver.h"
 
 #define PIN 27
+
 
 using namespace std;
 

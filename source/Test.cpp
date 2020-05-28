@@ -42,8 +42,13 @@ void testIsAlarmReady() {
     cin>>a;
 }
 
+void testRegisterNewSensor(){
+    list<Sensor> l,l1;
+    Core c(l,l1);
+    c.registerNewSensor();
+}
 int main() {
     //testRemoveSensorFromList();
-    testIsAlarmReady();
+    testRegisterNewSensor();
     return 0;
 }

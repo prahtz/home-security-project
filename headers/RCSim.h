@@ -1,14 +1,11 @@
-class RCSim {
-
-};
-
+#include <unistd.h>
 class RCSwitch {
     public:
         RCSwitch() {};
-        void enableReceive(int PIN);
-        bool available();
+        void enableReceive(int PIN){}
+        bool available(){return true;}
         int getReceivedValue();
-        void resetAvailable();
+        void resetAvailable() {}
 
 };
 

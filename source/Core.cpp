@@ -41,6 +41,24 @@ bool Core::isAlarmReady(AlarmType at) {
 
 void Core::registerNewSensor() {
     Receiver receiver(PIN);
-    receiver.startReceiving();
+    thread newSensorThread(&Receiver::startReceiving, &receiver);
+    chrono::time_point<chrono::system_clock> start, end;
+    start = chrono::system_clock::now();
+    chrono::duration<double> elapsedSeconds = chrono::duration<double>(0);
+    chrono::duration<double> secondsLimit = chrono::duration<double>(30);
+    while(!receiver.isCodeAvailable() && elapsedSeconds < secondsLimit) {
+        end = chrono::system_clock::now();
+        elapsedSeconds = end - start;
+    }
+    if(elapsedSeconds < secondsLimit) {
+        receiver.stopReceiving();
+        newSensorThread.join();
+        int codeReceived = receiver.getLastCodeReceived();
+        cout<<codeReceived<<endl;
+    }
+    else {
+        throw "No signals received";
+    }
+
 }
 
