@@ -33,7 +33,7 @@
 */
 
 #include "RCSwitch.h"
-
+#ifdef RPI
 #ifdef RaspberryPi
     // PROGMEM and _P functions are for AVR based microprocessors,
     // so we must normalize these for the ARM processor:
@@ -704,4 +704,5 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
   RCSwitch::timings[changeCount++] = duration;
   lastTime = time;  
 }
+#endif
 #endif

@@ -31,6 +31,7 @@
 #define _RCSwitch_h
 
 
+
 #if defined(ARDUINO) && ARDUINO >= 100
     #include "Arduino.h"
 #elif defined(ENERGIA) // LaunchPad, FraunchPad and StellarPad specific
@@ -44,8 +45,6 @@
     #include <wiringPi.h>
 #elif defined(SPARK)
     #include "application.h"
-#else
-    #include "WProgram.h"
 #endif
 
 #include <stdint.h>
