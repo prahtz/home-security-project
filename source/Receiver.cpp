@@ -1,10 +1,5 @@
 #include "Receiver.h"
 
-inline Receiver::Receiver() {
-    this->pin = 0;
-    stopReceive = false;
-}
-
 Receiver::Receiver(int pin) {
     this->pin = pin;
     stopReceive = false;
@@ -24,27 +19,29 @@ void Receiver::startReceiving() {
             if (codeRecieved == 0) {
                 throw "Codifica sconosciuta";
             } else {      
-                mBuff.lock();
-                if(buffSize == BUFFMAX) 
+                unique_lock<mutex> lock(mBuff);
+                if(codesBuffer.size() >= BUFFMAX) 
                     codesBuffer.pop_back();
                 codesBuffer.push_front(codeRecieved);
-                mBuff.unlock();
+                lock.unlock();
+                codeAvailable.notify_all();
             }
             rc.resetAvailable();
         }
         //usleep(100); 
     }
-    usleep(1000000); 
 }
 
 void Receiver::stopReceiving() {
     stopReceive = true;
 }
 
-bool Receiver::isCodeAvailable() {
-    return codesBuffer.size() != 0;
+bool Receiver::isBufferEmpty() {
+    return codesBuffer.empty();
 }
 
-int Receiver::getLastCodeReceived() {
-    return codesBuffer.front();
+int Receiver::popCodeFromBuffer() {
+    int code = codesBuffer.back();
+    codesBuffer.pop_back();
+    return code;
 }

@@ -1,26 +1,59 @@
 
 #include "Core.h"
-#include <stdlib.h>
 
-Core::Core(list <Sensor> activeSensorList, list<Sensor> knownSensorList) {
-    this->activeSensorList = activeSensorList;
-    this->knownSensorList = knownSensorList;
+
+Core::Core() : receiver(PIN), eventHandler(&receiver){
+    this->alarmActivated = false;
+    setupKnownSensors();
+    receiverThread = thread(&Receiver::startReceiving, &receiver);
+    eventHandlerThread = thread(&EventHandler::startListening, &eventHandler, ref(knownSensorList));
+    eventHandlerThread.join();
+    receiverThread.join();
 };
-
+//TEST
+//TODO
+void Core::setupKnownSensors() {
+    ifstream readingFile("./csv/known.csv");
+    string line;
+    if(readingFile.is_open()) {
+        while(getline(readingFile, line)) {
+            istringstream streamString(line);
+            string field;
+            getline(streamString, field, ';');
+            switch(stoi(field)) {
+                case DOOR_SENSOR:
+                    DoorSensor* ds = new DoorSensor();
+                    getline(streamString, field, ';');
+                    ds->setSensorID(stoi(field));
+                    getline(streamString, field, ';');
+                    ds->setSensorState((State) stoi(field));
+                    getline(streamString, field, ';');
+                    ds->setOpenCode(stoi(field));
+                    getline(streamString, field);
+                    ds->setCloseCode(stoi(field));
+                    knownSensorList.push_back(ds);
+                    break;
+            }       
+        }
+    }
+    else
+        ofstream createdFile("./csv/known.csv");
+};
+//TEST
 //Return true if sensor added, false otherwise
-bool Core::addSensorToList(Sensor s, list<Sensor> sensorList) {
-    list<Sensor>::iterator it = std::find_if(sensorList.begin(), sensorList.end(), [&s](Sensor sensor) {return sensor.getSensorID() == s.getSensorID();});
+bool Core::addSensorToList(Sensor* s, list<Sensor*> sensorList) {
+    list<Sensor*>::iterator it = std::find_if(sensorList.begin(), sensorList.end(), [s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
     if(it == sensorList.end()) {
         sensorList.push_back(s);
         return true;
     }
     return false;
 };
-
+//TEST
 //Return true if sensor removed, false otherwise
-bool Core::removeSensorFromList(Sensor s, list<Sensor> sensorList) {
+bool Core::removeSensorFromList(Sensor* s, list<Sensor*> sensorList) {
     int listSize = sensorList.size();
-    sensorList.remove_if([&s](Sensor sensor) {return sensor.getSensorID() == s.getSensorID();});
+    sensorList.remove_if([s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
     if(listSize != sensorList.size()) 
         return true;
     return false;
@@ -31,7 +64,7 @@ bool Core::removeSensorFromList(Sensor s, list<Sensor> sensorList) {
 bool Core::isAlarmReady(AlarmType at) {
     switch(at) {
         case COMPLETE:
-            list<Sensor>::iterator it = std::find_if(activeSensorList.begin(), activeSensorList.end(), [](Sensor s) {return !s.isSensorReady();});
+            list<Sensor*>::iterator it = std::find_if(activeSensorList.begin(), activeSensorList.end(), [](Sensor* s) {return !s->isSensorReady();});
             if(it == activeSensorList.end())
                 return true;
             break;
@@ -39,26 +72,10 @@ bool Core::isAlarmReady(AlarmType at) {
     return false;
 }
 
-void Core::registerNewSensor() {
-    Receiver receiver(PIN);
-    thread newSensorThread(&Receiver::startReceiving, &receiver);
-    chrono::time_point<chrono::system_clock> start, end;
-    start = chrono::system_clock::now();
-    chrono::duration<double> elapsedSeconds = chrono::duration<double>(0);
-    chrono::duration<double> secondsLimit = chrono::duration<double>(30);
-    while(!receiver.isCodeAvailable() && elapsedSeconds < secondsLimit) {
-        end = chrono::system_clock::now();
-        elapsedSeconds = end - start;
-    }
-    if(elapsedSeconds < secondsLimit) {
-        receiver.stopReceiving();
-        newSensorThread.join();
-        int codeReceived = receiver.getLastCodeReceived();
-        cout<<codeReceived<<endl;
-    }
-    else {
-        throw "No signals received";
-    }
-
+//??
+int Core::getNewSensorID() {
+    if(knownSensorList.empty())
+        return 0;
+    return (*knownSensorList.end())->getSensorID() + 1;
 }
 

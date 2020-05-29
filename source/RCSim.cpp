@@ -2,8 +2,8 @@
 
 
 int RCSwitch::getReceivedValue() {
-    usleep(3000000);
-    return 1234;
+    usleep(300000);
+    return var++;
 }
 
 int wiringPiSetup() {

@@ -8,6 +8,7 @@
 #define BUFFMAX 100
 
 #include <list>
+#include <condition_variable>
 #include <mutex>
 #include <atomic>
 #include <unistd.h>
@@ -19,12 +20,12 @@ class Receiver {
         RCSwitch rc;
         atomic<bool> stopReceive;
         list<int> codesBuffer;
-        mutex mBuff;
     public:
-        Receiver();
+        condition_variable codeAvailable;
+        mutex mBuff;
         Receiver(int pin);
         void startReceiving();   
         void stopReceiving();    
-        bool isCodeAvailable();
-        int getLastCodeReceived();
+        bool isBufferEmpty();
+        int popCodeFromBuffer();
 };
