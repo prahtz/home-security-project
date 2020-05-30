@@ -2,14 +2,24 @@
 #include "Core.h"
 
 
-Core::Core() : receiver(PIN), eventHandler(&receiver){
+Core::Core() : receiver(PIN), eventHandler(&receiver, &knownSensorList, &codeMap){
     this->alarmActivated = false;
     setupKnownSensors();
+
+
     receiverThread = thread(&Receiver::startReceiving, &receiver);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler, ref(knownSensorList));
+
+    registerNewSensor();
+
     eventHandlerThread.join();
     receiverThread.join();
 };
+
+void Core::setupCodeMap() {
+
+}
+
 //TEST
 //TODO
 void Core::setupKnownSensors() {
@@ -32,12 +42,18 @@ void Core::setupKnownSensors() {
                     getline(streamString, field);
                     ds->setCloseCode(stoi(field));
                     knownSensorList.push_back(ds);
+                    codeMap[ds->getOpenCode()]= new pair<Action, Sensor*>(OPEN, ds);
+                    codeMap[ds->getCloseCode()] = new pair<Action, Sensor*>(CLOSE, ds);
                     break;
             }       
         }
+        readingFile.close();
     }
-    else
+    else {
         ofstream createdFile("./csv/known.csv");
+        createdFile.close();
+    }
+    
 };
 //TEST
 //Return true if sensor added, false otherwise
@@ -76,6 +92,40 @@ bool Core::isAlarmReady(AlarmType at) {
 int Core::getNewSensorID() {
     if(knownSensorList.empty())
         return 0;
-    return (*knownSensorList.end())->getSensorID() + 1;
+    return (*(--knownSensorList.end()))->getSensorID() + 1;
+}
+
+//TO TEST
+void Core::registerNewSensor() {
+    DoorSensor* ds = new DoorSensor();
+    ds->setSensorID(getNewSensorID());
+    ds->setSensorState(OPENED);
+
+    eventHandler.registerCode = true;
+    unique_lock<mutex> registerLock(eventHandler.mNewCode);
+
+    eventHandler.newCodeAvailable.wait(registerLock, [this] {return (bool) eventHandler.codeArrived;});
+    eventHandler.codeArrived = false;
+    code closeCode = eventHandler.newCode;
+    ds->setCloseCode(closeCode);
+    cout<<"Core - closeCode: "<< closeCode << endl;
+
+    bool go = true;
+    while(go) {
+        eventHandler.newCodeAvailable.wait(registerLock, [this] {return (bool) eventHandler.codeArrived;});
+        eventHandler.codeArrived = false;
+        code openCode = eventHandler.newCode;
+        if(openCode != closeCode) {
+            ds->setOpenCode(openCode);
+            cout<<"Core - openCode: "<< openCode << endl;
+            go = false;
+        }
+    }
+    eventHandler.registerCode = false;
+    
+    eventHandler.mSensorList.lock();
+    addSensorToList(ds, knownSensorList);
+    eventHandler.mSensorList.unlock();
+    cout<<"Core - FINE"<<endl;
 }
 

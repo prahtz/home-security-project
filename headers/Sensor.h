@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 
+typedef int code;
 using namespace std;
 
 class Sensor {
@@ -17,7 +18,7 @@ class Sensor {
         void setSensorID(int sensorID);
         void setSensorState(State state);
         bool isSensorReady();
-        virtual list<int> getCodeList() {return list<int>();}
+        virtual list<code> getCodeList() {return list<code>();}
         virtual void writeToFile(ofstream &out);
         /*virtual bool isSensorReady();*/
 };

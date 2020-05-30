@@ -1,5 +1,6 @@
+#pragma once
 enum Action {
     OPEN,
     CLOSE,
-    BATTERY_LOW
-};
+    BATTERY_LOW,
+}; 

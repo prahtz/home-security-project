@@ -2,7 +2,7 @@
 
 
 int RCSwitch::getReceivedValue() {
-    usleep(300000);
+    usleep(1000000);
     return var++;
 }
 

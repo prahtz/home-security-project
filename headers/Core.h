@@ -6,9 +6,11 @@
 #include <exception>
 #include <stdlib.h>
 #include <sstream>
+#include <map>
 #include "AlarmType.h"
 #include "EventHandler.h"
 #include "SensorTypes.h"
+#include "Action.h"
 
 
 #define PIN 27
@@ -21,12 +23,14 @@ class Core{
         bool alarmActivated;
         list<Sensor*> activeSensorList;
         list<Sensor*> knownSensorList;
+        map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
         EventHandler eventHandler;
         thread receiverThread;
         thread eventHandlerThread;
         void setupReceiver();
         void setupKnownSensors();
+        void setupCodeMap();
         int getNewSensorID();
     public:
         Core(); 
@@ -35,5 +39,5 @@ class Core{
         void activateAlarm(AlarmType at);
         bool isAlarmReady(AlarmType at);
         //int receiveNewCode();
-       // void registerNewSensor();
+        void registerNewSensor();
 };

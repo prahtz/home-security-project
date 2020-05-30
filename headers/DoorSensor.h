@@ -3,13 +3,15 @@
 
 class DoorSensor : public Sensor {
     private:
-        int openCode;
-        int closeCode;
+        code openCode;
+        code closeCode;
     public:
         DoorSensor();
         DoorSensor(int sensorID, State state, int openCode, int closeCode);
-        list<int> getCodeList();
-        void setOpenCode(int openCode);
-        void setCloseCode(int closeCode);
+        list<code> getCodeList();
+        void setOpenCode(code openCode);
+        void setCloseCode(code closeCode);
+        code getOpenCode();
+        code getCloseCode();
         void writeToFile(ofstream &out);      
 };
