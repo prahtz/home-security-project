@@ -28,7 +28,6 @@ void Receiver::startReceiving() {
             }
             rc.resetAvailable();
         }
-        //usleep(100); 
     }
 }
 

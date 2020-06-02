@@ -17,7 +17,7 @@ list<code> DoorSensor::getCodeList() {
 }
 
 void DoorSensor::writeToFile(ofstream &out) {
-    out << "0;";
+    out << DOOR_SENSOR << ";";
     Sensor::writeToFile(out);
     out<<openCode<<";"<<closeCode<<endl;
 }

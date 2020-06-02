@@ -8,25 +8,8 @@ EventHandler::EventHandler(Receiver* receiver, list<Sensor*>* knownSensorList, m
     codeArrived = false;
 }
 
-//TESTED, delete?
-Sensor* EventHandler::getSensorByCode(code codeReceived, bool* knownCode) {
-    list<Sensor*>::iterator it = std::find_if(knownSensorList->begin(), knownSensorList->end(), [&codeReceived](Sensor* s) {
-        list<code> codeList = s->getCodeList();
-        list<code>::iterator it = std::find_if(codeList.begin(), codeList.end(), [&codeReceived](code sensorCode) {return codeReceived == sensorCode;});
-        return it != codeList.end();
-    });
-    if(it != knownSensorList->end()) {
-        *knownCode = true;
-        return *it;
-    }
-    *knownCode = false;
-    return *it;
-
-}
-
 //TO TEST
-void EventHandler::startListening(list<Sensor*> &knownSensorList) {
-    this->knownSensorList = &knownSensorList;
+void EventHandler::startListening() {
     while(true) {
         unique_lock<mutex> receiverLock(receiver->mBuff);
         receiver->codeAvailable.wait(receiverLock, [this] {return !receiver->isBufferEmpty();});
@@ -66,6 +49,7 @@ void EventHandler::startListening(list<Sensor*> &knownSensorList) {
 void EventHandler::onSensorOpen(Sensor* sensor) {
     mSensorList.lock();
     sensor->setSensorState(OPENED);
+    updateKnownFile(); 
     mSensorList.unlock();
 }
 
@@ -73,5 +57,15 @@ void EventHandler::onSensorOpen(Sensor* sensor) {
 void EventHandler::onSensorClose(Sensor* sensor) {
     mSensorList.lock();
     sensor->setSensorState(CLOSED);
+    updateKnownFile(); 
     mSensorList.unlock();
+}
+
+void EventHandler::updateKnownFile() {
+    mFile.lock();
+    ofstream out(KNOWN_PATH, ios::trunc);
+    for(Sensor* s : (*knownSensorList))
+        s->writeToFile(out);
+    out.close();
+    mFile.unlock();
 }

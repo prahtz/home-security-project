@@ -8,22 +8,19 @@ Core::Core() : receiver(PIN), eventHandler(&receiver, &knownSensorList, &codeMap
 
 
     receiverThread = thread(&Receiver::startReceiving, &receiver);
-    eventHandlerThread = thread(&EventHandler::startListening, &eventHandler, ref(knownSensorList));
+    eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
 
-    registerNewSensor();
+    registerNewDoorSensor();
 
     eventHandlerThread.join();
     receiverThread.join();
 };
 
-void Core::setupCodeMap() {
-
-}
 
 //TEST
 //TODO
 void Core::setupKnownSensors() {
-    ifstream readingFile("./csv/known.csv");
+    ifstream readingFile(KNOWN_PATH);
     string line;
     if(readingFile.is_open()) {
         while(getline(readingFile, line)) {
@@ -50,27 +47,27 @@ void Core::setupKnownSensors() {
         readingFile.close();
     }
     else {
-        ofstream createdFile("./csv/known.csv");
+        ofstream createdFile(KNOWN_PATH);
         createdFile.close();
     }
     
 };
 //TEST
 //Return true if sensor added, false otherwise
-bool Core::addSensorToList(Sensor* s, list<Sensor*> sensorList) {
-    list<Sensor*>::iterator it = std::find_if(sensorList.begin(), sensorList.end(), [s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
-    if(it == sensorList.end()) {
-        sensorList.push_back(s);
+bool Core::addSensorToList(Sensor* s, list<Sensor*>* sensorList) {
+    list<Sensor*>::iterator it = std::find_if(sensorList->begin(), sensorList->end(), [s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
+    if(it == sensorList->end()) {
+        sensorList->push_back(s);
         return true;
     }
     return false;
 };
 //TEST
 //Return true if sensor removed, false otherwise
-bool Core::removeSensorFromList(Sensor* s, list<Sensor*> sensorList) {
-    int listSize = sensorList.size();
-    sensorList.remove_if([s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
-    if(listSize != sensorList.size()) 
+bool Core::removeSensorFromList(Sensor* s, list<Sensor*>* sensorList) {
+    int listSize = sensorList->size();
+    sensorList->remove_if([s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
+    if(listSize != sensorList->size()) 
         return true;
     return false;
 };
@@ -96,15 +93,15 @@ int Core::getNewSensorID() {
 }
 
 //TO TEST
-void Core::registerNewSensor() {
+void Core::registerNewDoorSensor() {
     DoorSensor* ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
     ds->setSensorState(OPENED);
 
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(eventHandler.mNewCode);
-
     eventHandler.newCodeAvailable.wait(registerLock, [this] {return (bool) eventHandler.codeArrived;});
+
     eventHandler.codeArrived = false;
     code closeCode = eventHandler.newCode;
     ds->setCloseCode(closeCode);
@@ -124,8 +121,15 @@ void Core::registerNewSensor() {
     eventHandler.registerCode = false;
     
     eventHandler.mSensorList.lock();
-    addSensorToList(ds, knownSensorList);
+    addSensorToList(ds, &knownSensorList);
     eventHandler.mSensorList.unlock();
+
+    eventHandler.mFile.lock();
+    ofstream out(KNOWN_PATH, ios::app);
+    ds->writeToFile(out);
+    out.close();
+    eventHandler.mFile.unlock();
     cout<<"Core - FINE"<<endl;
 }
+
 

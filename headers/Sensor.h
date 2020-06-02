@@ -1,4 +1,5 @@
 #include "State.h"
+#include "SensorTypes.h"
 #include <list>
 #include <fstream>
 #include <iostream>
