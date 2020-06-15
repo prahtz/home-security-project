@@ -1,4 +1,4 @@
-#include "Core.h"
+#include "ConnHandler.h"
 
 void testCoreConstructor() {
     Core c;
@@ -6,6 +6,6 @@ void testCoreConstructor() {
 
 
 int main() {
-    Core c;
+    ConnHandler ch;
     return 0;
 }

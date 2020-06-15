@@ -1,8 +1,18 @@
+#ifdef RPI
+    #include <sys/socket.h> 
+#else
+    #include <winsock2.h>
+    #define LAN_IP "192.168.1.50"
+    #include <ws2tcpip.h>
+    #include <Iphlpapi.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <list>
 #include <algorithm>
 #include <thread>
+#include <future>
 #include <exception>
 #include <stdlib.h>
 #include <sstream>
@@ -11,6 +21,8 @@
 #include "EventHandler.h"
 #include "SensorTypes.h"
 #include "Action.h"
+#include "Message.h"
+#include "MessageType.h"
 
 
 #define PIN 27
@@ -27,15 +39,22 @@ class Core{
         Receiver receiver;
         EventHandler eventHandler;
         thread receiverThread, eventHandlerThread;
-        void setupReceiver();
         void setupKnownSensors();
+        void startClientServerComunication();
         int getNewSensorID();
+        bool isFutureReady(shared_future<string> fut);
+
     public:
         Core(); 
+        string eom = "//eom";
+        string fail = "//null";
         bool addSensorToList(Sensor* s, list<Sensor*>* sensorList);
         bool removeSensorFromList(Sensor* s, list<Sensor*>* sensorList);
         void activateAlarm(AlarmType at);
         bool isAlarmReady(AlarmType at);
-        void registerNewDoorSensor();
+        void registerNewDoorSensor(int clientSocke);
         void writeSensorToFile(Sensor* s);
+        string getMessage(int clientSocket);
+        void sendMessage(int clientSocket, string message);
+        void fillBuffer(char* buffer, string s);
 };

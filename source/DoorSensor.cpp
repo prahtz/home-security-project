@@ -4,9 +4,10 @@ DoorSensor::DoorSensor() : Sensor() {
     
 }
 
-DoorSensor::DoorSensor(int sensorID, State state, code openCode, code closeCode) : Sensor(sensorID, state){
+DoorSensor::DoorSensor(int sensorID, State state, code openCode, code closeCode, string sensorName) : Sensor(sensorID, state){
     this->openCode = openCode;
     this->closeCode = closeCode;
+    this->sensorName = sensorName;
 }
 
 list<code> DoorSensor::getCodeList() {
@@ -19,7 +20,7 @@ list<code> DoorSensor::getCodeList() {
 void DoorSensor::writeToFile(ofstream &out) {
     out << DOOR_SENSOR << ";";
     Sensor::writeToFile(out);
-    out<<openCode<<";"<<closeCode<<endl;
+    out<<openCode<<";"<<closeCode<<";"<<sensorName<<endl;
 }
 
 void DoorSensor::setOpenCode(code openCode) {
@@ -28,6 +29,10 @@ void DoorSensor::setOpenCode(code openCode) {
 
 void DoorSensor::setCloseCode(code closeCode) {
     this->closeCode = closeCode;
+}
+
+void DoorSensor::setSensorName(string sensorName) {
+    this->sensorName = sensorName;
 }
 
 code DoorSensor::getOpenCode() {

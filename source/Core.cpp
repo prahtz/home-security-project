@@ -1,62 +1,63 @@
-
 #include "Core.h"
 
-
-Core::Core() : receiver(PIN), eventHandler(&receiver, &knownSensorList, &codeMap){
+Core::Core() : receiver(PIN), eventHandler(&receiver, &knownSensorList, &codeMap)
+{
     this->alarmActivated = false;
     setupKnownSensors();
 
-
     receiverThread = thread(&Receiver::startReceiving, &receiver);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
-
-    registerNewDoorSensor();
-
-    eventHandlerThread.join();
-    receiverThread.join();
 };
-
 
 //TEST
 //TODO
-void Core::setupKnownSensors() {
+void Core::setupKnownSensors()
+{
     ifstream readingFile(KNOWN_PATH);
     string line;
-    if(readingFile.is_open()) {
-        while(getline(readingFile, line)) {
+    if (readingFile.is_open())
+    {
+        while (getline(readingFile, line))
+        {
             istringstream streamString(line);
             string field;
             getline(streamString, field, ';');
-            switch(stoi(field)) {
-                case DOOR_SENSOR:
-                    DoorSensor* ds = new DoorSensor();
-                    getline(streamString, field, ';');
-                    ds->setSensorID(stoi(field));
-                    getline(streamString, field, ';');
-                    ds->setSensorState((State) stoi(field));
-                    getline(streamString, field, ';');
-                    ds->setOpenCode(stoi(field));
-                    getline(streamString, field);
-                    ds->setCloseCode(stoi(field));
-                    knownSensorList.push_back(ds);
-                    codeMap[ds->getOpenCode()]= new pair<Action, Sensor*>(OPEN, ds);
-                    codeMap[ds->getCloseCode()] = new pair<Action, Sensor*>(CLOSE, ds);
-                    break;
-            }       
+            switch (stoi(field))
+            {
+            case DOOR_SENSOR:
+                DoorSensor *ds = new DoorSensor();
+                getline(streamString, field, ';');
+                ds->setSensorID(stoi(field));
+                getline(streamString, field, ';');
+                ds->setSensorState((State)stoi(field));
+                getline(streamString, field, ';');
+                ds->setOpenCode(stoi(field));
+                getline(streamString, field);
+                ds->setCloseCode(stoi(field));
+                getline(streamString, field);
+                ds->setSensorName(field);
+                knownSensorList.push_back(ds);
+                codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
+                codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
+                break;
+            }
         }
         readingFile.close();
     }
-    else {
+    else
+    {
         ofstream createdFile(KNOWN_PATH);
         createdFile.close();
     }
-    
 };
+
 //TEST
 //Return true if sensor added, false otherwise
-bool Core::addSensorToList(Sensor* s, list<Sensor*>* sensorList) {
-    list<Sensor*>::iterator it = std::find_if(sensorList->begin(), sensorList->end(), [s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
-    if(it == sensorList->end()) {
+bool Core::addSensorToList(Sensor *s, list<Sensor *> *sensorList)
+{
+    list<Sensor *>::iterator it = std::find_if(sensorList->begin(), sensorList->end(), [s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
+    if (it == sensorList->end())
+    {
         sensorList->push_back(s);
         return true;
     }
@@ -64,72 +65,204 @@ bool Core::addSensorToList(Sensor* s, list<Sensor*>* sensorList) {
 };
 //TEST
 //Return true if sensor removed, false otherwise
-bool Core::removeSensorFromList(Sensor* s, list<Sensor*>* sensorList) {
+bool Core::removeSensorFromList(Sensor *s, list<Sensor *> *sensorList)
+{
     int listSize = sensorList->size();
-    sensorList->remove_if([s](Sensor* sensor) {return sensor->getSensorID() == s->getSensorID();});
-    if(listSize != sensorList->size()) 
+    sensorList->remove_if([s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
+    if (listSize != sensorList->size())
         return true;
     return false;
 };
 
 //TEST
 //Return true if alarm is activatable, false otherwise
-bool Core::isAlarmReady(AlarmType at) {
-    switch(at) {
-        case COMPLETE:
-            list<Sensor*>::iterator it = std::find_if(activeSensorList.begin(), activeSensorList.end(), [](Sensor* s) {return !s->isSensorReady();});
-            if(it == activeSensorList.end())
-                return true;
-            break;
+bool Core::isAlarmReady(AlarmType at)
+{
+    switch (at)
+    {
+    case COMPLETE:
+        list<Sensor *>::iterator it = std::find_if(activeSensorList.begin(), activeSensorList.end(), [](Sensor *s) { return !s->isSensorReady(); });
+        if (it == activeSensorList.end())
+            return true;
+        break;
     }
     return false;
 }
 
 //??
-int Core::getNewSensorID() {
-    if(knownSensorList.empty())
+int Core::getNewSensorID()
+{
+    if (knownSensorList.empty())
         return 0;
     return (*(--knownSensorList.end()))->getSensorID() + 1;
 }
 
+void Core::fillBuffer(char *buffer, string s)
+{
+    for (int i = 0; i < s.length(); i++)
+        buffer[i] = s[i];
+}
+
+bool Core::isFutureReady(shared_future<string> fut)
+{
+    return fut.wait_for(std::chrono::milliseconds(0)) == future_status::ready;
+}
+
 //TO TEST
-void Core::registerNewDoorSensor() {
-    DoorSensor* ds = new DoorSensor();
+void Core::registerNewDoorSensor(int clientSocket)
+{
+
+    DoorSensor *ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
     ds->setSensorState(OPENED);
 
+    std::shared_future<string> fut = std::async([this, clientSocket]() { return this->getMessage(clientSocket); }).share();
+
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(eventHandler.mNewCode);
-    eventHandler.newCodeAvailable.wait(registerLock, [this] {return (bool) eventHandler.codeArrived;});
+    eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
+        return ((bool)eventHandler.codeArrived) || isFutureReady(fut);
+    });
+
+    if (isFutureReady(fut))
+    {
+        try
+        {
+            if (fut.get() == Message::ABORT || fut.get() == fail)
+            {
+                cout << "WE";
+                eventHandler.registerCode = false;
+                delete ds;
+                return;
+            }
+            else
+                throw "Unexpected message";
+        }
+        catch (std::exception)
+        {
+        }
+    }
 
     eventHandler.codeArrived = false;
     code closeCode = eventHandler.newCode;
     ds->setCloseCode(closeCode);
-    cout<<"Core - closeCode: "<< closeCode << endl;
+    cout << "Core - closeCode: " << closeCode << endl;
+
+    sendMessage(clientSocket, Message::NEXT_CODE);
 
     bool go = true;
-    while(go) {
-        eventHandler.newCodeAvailable.wait(registerLock, [this] {return (bool) eventHandler.codeArrived;});
+    while (go)
+    {
+        eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
+            return ((bool)eventHandler.codeArrived) || fut.wait_for(std::chrono::milliseconds(0)) == future_status::ready;
+        });
+
+        if (isFutureReady(fut))
+        {
+            try
+            {
+                if (fut.get() == Message::ABORT || fut.get() == fail)
+                {
+                    cout << "WE";
+                    eventHandler.registerCode = false;
+                    delete ds;
+                    return;
+                }
+                else
+                    throw "Unexpected message";
+            }
+            catch (std::exception)
+            {
+            }
+        }
         eventHandler.codeArrived = false;
         code openCode = eventHandler.newCode;
-        if(openCode != closeCode) {
+        if (openCode != closeCode)
+        {
             ds->setOpenCode(openCode);
-            cout<<"Core - openCode: "<< openCode << endl;
+            sendMessage(clientSocket, MessageType::STRING);
+            cout << "Core - openCode: " << openCode << endl;
             go = false;
         }
     }
     eventHandler.registerCode = false;
-    
-    eventHandler.mSensorList.lock();
-    addSensorToList(ds, &knownSensorList);
-    eventHandler.mSensorList.unlock();
-
-    eventHandler.mFile.lock();
-    ofstream out(KNOWN_PATH, ios::app);
-    ds->writeToFile(out);
-    out.close();
-    eventHandler.mFile.unlock();
-    cout<<"Core - FINE"<<endl;
+    if (!isFutureReady(fut))
+        eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
+            return isFutureReady(fut);
+        });
+    try
+    {
+        if (fut.get() == Message::ABORT || fut.get() == fail)
+        {
+            cout << "WE";
+            eventHandler.registerCode = false;
+            delete ds;
+            return;
+        }
+        else if (fut.get() == MessageType::STRING)
+        {
+            sendMessage(clientSocket, Message::ACK);
+            string sensorName = getMessage(clientSocket);
+            if (sensorName != fail && sensorName != Message::ABORT)
+            {
+                ds->setSensorName(sensorName);
+                eventHandler.mSensorList.lock();
+                addSensorToList(ds, &knownSensorList);
+                eventHandler.mSensorList.unlock();
+                eventHandler.mFile.lock();
+                ofstream out(KNOWN_PATH, ios::app);
+                ds->writeToFile(out);
+                out.close();
+                eventHandler.mFile.unlock();
+                cout << "Core - sensorName" << endl;
+            }
+            else
+                delete ds;
+        }
+        else
+            throw "Unexpected message";
+    }
+    catch (std::exception)
+    {
+    }
+    sendMessage(clientSocket, Message::REGISTER_SUCCESS);
+    cout << "Core - FINE" << endl;
 }
 
+string Core::getMessage(int clientSocket)
+{
+    string message;
+    char *buf = new char[BUFSIZ];
+    string s = "";
+    string app;
+    bool go = true;
+    bool header = true;
+    do
+    {
+        int r = recv(clientSocket, buf, sizeof(buf), 0);
+        if (r == 0 || r == SOCKET_ERROR)
+        {
+            message = fail;
+            delete buf;
+            eventHandler.newCodeAvailable.notify_all();
+            return message;
+        }
+        
+        message = message + ((string)buf).substr(0, r);
+        if (message.find(eom) != string::npos)
+        {
+            message = message.substr(0, message.length() - eom.length());
+            go = false;
+        }
+    } while (go);
+    delete buf;
+    eventHandler.newCodeAvailable.notify_all();
+    return message;
+}
 
+void Core::sendMessage(int clientSocket, string message)
+{
+    char *buf = new char[BUFSIZ];
+    fillBuffer(buf, message + eom);
+    send(clientSocket, buf, message.length() + eom.length(), 0);
+}
