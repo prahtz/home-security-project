@@ -16,11 +16,15 @@ class ConnHandler {
     private:
         int serverSocket;
         Core core;
-
+        const int MAX_CLIENTS = 10;
         mutex mCore;
 
         void setupServerSocket();
         void startClientServerComunication();
+
+        int closesocket(int socket) {
+                return close(socket);
+        }   
     public:
         ConnHandler();
         void clientThread(int clientSocket);
