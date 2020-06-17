@@ -2,7 +2,11 @@
 
 using namespace std;
 
-#define PORT "33470"
+#ifdef _WIN32
+    #define PORT "33471"
+#else
+    #define PORT "33470"
+#endif
 #define DOMAIN  AF_INET
 #define TRANSPORT SOCK_STREAM
 #define PROTOCOL IPPROTO_TCP

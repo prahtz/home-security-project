@@ -1,4 +1,4 @@
-#if defined(WIN32)
+#ifdef _WIN32
     #include <winsock2.h>
     #define LAN_IP "192.168.1.50"
     #include <ws2tcpip.h>
@@ -13,9 +13,6 @@
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
     #define LAN_IP "192.168.1.48"
-
-
-   
 #endif
 
 #include <iostream>

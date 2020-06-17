@@ -49,17 +49,20 @@ void ConnHandler::setupServerSocket() {
     if (iResult == SOCKET_ERROR) {
         throw "Listen failed with error:" + WSAGetLastError();
     }
-    #endif
+    #else
     struct sockaddr_in serv_addr, cli_addr;
     int serverSocket = socket(DOMAIN, TRANSPORT, 0);
     bzero((char *) &serv_addr, sizeof(serv_addr));
     int portno = atoi(PORT);
     serv_addr.sin_family = AF_INET;
-    inet_pton(DOMAIN, LAN_IP, &serv_addr.sin_addr.s_addr);
+
+    int s = inet_pton(DOMAIN, LAN_IP, &serv_addr.sin_addr.s_addr);
+    cout << s <<endl;
     serv_addr.sin_port = htons(portno);
     if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 
-            throw "Bind failed";
+        throw "Bind failed";
     listen(serverSocket, MAX_CLIENTS);
+    #endif
 }
 
 void ConnHandler::startClientServerComunication() {
@@ -91,12 +94,12 @@ void ConnHandler::startClientServerComunication() {
         }
     }
     closesocket(serverSocket);
-    #ifdef WIN32
+    #ifdef _WIN32
         WSACleanup();
     #endif
 }
 void ConnHandler::clientThread(int clientSocket) {
-    #ifdef WIN32
+    #ifdef _WIN32
         tcp_keepalive KeepAlive;
         DWORD dJunk;
         KeepAlive.onoff = 1;
