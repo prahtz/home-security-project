@@ -84,10 +84,8 @@ void ConnHandler::startClientServerComunication() {
     int i = 0;
     while(true) {
         int clientSocket = INVALID_SOCKET;
-        while(clientSocket == INVALID_SOCKET) {
+        while(clientSocket == INVALID_SOCKET) 
             clientSocket = accept(serverSocket, NULL, NULL);
-            cout << clientSocket;
-        }
         clientThreads.push_back(std::thread(&ConnHandler::clientThread, this, clientSocket));
         i++;
         cout<<i<<endl;

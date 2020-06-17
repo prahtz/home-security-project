@@ -42,15 +42,18 @@ using namespace std;
 class Core{
     private:
         bool alarmActivated;
+        atomic<bool> abortProcedure;
         list<Sensor*> knownSensorList, activeSensorList;
         map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
         EventHandler eventHandler;
         thread receiverThread, eventHandlerThread;
+
         void setupKnownSensors();
         void startClientServerComunication();
         int getNewSensorID();
         bool isFutureReady(shared_future<string> fut);
+        string getMessageAndNotify(int clientSocket);
         
 
     public:

@@ -110,36 +110,26 @@ bool Core::isFutureReady(shared_future<string> fut)
 //TO TEST
 void Core::registerNewDoorSensor(int clientSocket)
 {
-
+    abortProcedure = false;
     DoorSensor *ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
     ds->setSensorState(OPENED);
 
-    std::shared_future<string> fut = std::async([this, clientSocket]() { return this->getMessage(clientSocket); }).share();
+    std::shared_future<string> fut = std::async([this, clientSocket]() { return this->getMessageAndNotify(clientSocket); }).share();
 
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(eventHandler.mNewCode);
     eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
-        return ((bool)eventHandler.codeArrived) || isFutureReady(fut);
+        return (bool)eventHandler.codeArrived || (bool)abortProcedure;
     });
 
-    if (isFutureReady(fut))
+    if (abortProcedure)
     {
-        try
-        {
-            if (fut.get() == Message::ABORT || fut.get() == fail)
-            {
-                cout << "WE";
-                eventHandler.registerCode = false;
-                delete ds;
-                return;
-            }
-            else
-                throw "Unexpected message";
-        }
-        catch (std::exception)
-        {
-        }
+        cout << "Abort...";
+        eventHandler.registerCode = false;
+        delete ds;
+        return;
+
     }
 
     eventHandler.codeArrived = false;
@@ -153,26 +143,15 @@ void Core::registerNewDoorSensor(int clientSocket)
     while (go)
     {
         eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
-            return ((bool)eventHandler.codeArrived) || fut.wait_for(std::chrono::milliseconds(0)) == future_status::ready;
+            return ((bool)eventHandler.codeArrived) || (bool) abortProcedure;
         });
 
-        if (isFutureReady(fut))
+        if (abortProcedure)
         {
-            try
-            {
-                if (fut.get() == Message::ABORT || fut.get() == fail)
-                {
-                    cout << "WE";
-                    eventHandler.registerCode = false;
-                    delete ds;
-                    return;
-                }
-                else
-                    throw "Unexpected message";
-            }
-            catch (std::exception)
-            {
-            }
+            cout << "Abort...";
+            eventHandler.registerCode = false;
+            delete ds;
+            return;
         }
         eventHandler.codeArrived = false;
         code openCode = eventHandler.newCode;
@@ -189,11 +168,10 @@ void Core::registerNewDoorSensor(int clientSocket)
         eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
             return isFutureReady(fut);
         });
-    try
-    {
-        if (fut.get() == Message::ABORT || fut.get() == fail)
+    try{
+        if (abortProcedure)
         {
-            cout << "WE";
+            cout << "Abort...";
             eventHandler.registerCode = false;
             delete ds;
             return;
@@ -220,10 +198,10 @@ void Core::registerNewDoorSensor(int clientSocket)
         }
         else
             throw "Unexpected message";
+    } catch(exception e) {
+        throw "Future wasn't ready";
     }
-    catch (std::exception)
-    {
-    }
+    
     sendMessage(clientSocket, Message::REGISTER_SUCCESS);
     cout << "Core - FINE" << endl;
 }
@@ -255,6 +233,14 @@ string Core::getMessage(int clientSocket)
         }
     } while (go);
     delete buf;
+    return message;
+}
+
+string Core::getMessageAndNotify(int clientSocket) {
+    string message = getMessage(clientSocket);
+    abortProcedure = message == Message::ABORT || message == fail;
+    std::unique_lock<mutex> registerLock(eventHandler.mNewCode);
+    registerLock.unlock();
     eventHandler.newCodeAvailable.notify_all();
     return message;
 }
@@ -265,6 +251,8 @@ void Core::sendMessage(int clientSocket, string message)
     fillBuffer(buf, message + eom);
     send(clientSocket, buf, message.length() + eom.length(), 0);
 }
+
+
 
 void Core::activateAlarm(int clientSocket) {
     if(isAlarmReady()) {
