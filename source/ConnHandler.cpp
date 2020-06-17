@@ -56,9 +56,18 @@ void ConnHandler::setupServerSocket() {
     cout << serverSocket <<endl;
     bzero((char *) &serv_addr, sizeof(serv_addr));
     int portno = atoi(PORT);
+    struct linger l;
+    l.l_onoff = 1;
+    l.l_linger = 0;
+    int reuseaddr = 1;
+    int reuseport = 1;
+    setsockopt(serverSocket, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
+    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &reuseaddr, sizeof(int));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(LAN_IP);
     serv_addr.sin_port = htons(portno);
+    
     if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         cout << "qua" << endl;
         throw "Bind failed";
