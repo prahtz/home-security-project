@@ -188,6 +188,8 @@ void Core::registerNewDoorSensor(int clientSocket)
                 eventHandler.mSensorList.unlock();
                 eventHandler.mFile.lock();
                 ofstream out(KNOWN_PATH, ios::app);
+                codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
+                codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
                 ds->writeToFile(out);
                 out.close();
                 eventHandler.mFile.unlock();
