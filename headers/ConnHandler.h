@@ -13,7 +13,7 @@ using namespace std;
 #define DNS_DOMAIN "prah.homepc.it"
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <sstream>
 #pragma comment(lib, "Ws2_32.lib")
 
 class ConnHandler {

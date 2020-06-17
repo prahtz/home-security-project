@@ -50,6 +50,7 @@ void ConnHandler::setupServerSocket() {
         throw "Listen failed with error:" + WSAGetLastError();
     }
     #else
+
     struct sockaddr_in serv_addr, cli_addr;
     int serverSocket = socket(DOMAIN, TRANSPORT, 0);
     cout << serverSocket <<endl;
@@ -57,8 +58,9 @@ void ConnHandler::setupServerSocket() {
     int portno = atoi(PORT);
     serv_addr.sin_family = AF_INET;
 
-    int s = inet_pton(DOMAIN, LAN_IP, &serv_addr.sin_addr.s_addr);
-    cout << s <<endl;
+    stringstream strValue;
+    strValue << LAN_IP;
+    strValue >> serv_addr.sin_addr.s_addr;
     serv_addr.sin_port = htons(portno);
     if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         cout << "qua" << endl;
