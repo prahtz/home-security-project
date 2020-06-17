@@ -111,7 +111,6 @@ void ConnHandler::clientThread(int clientSocket) {
         WSAIoctl(clientSocket, SIO_KEEPALIVE_VALS, &KeepAlive, sizeof( KeepAlive ), NULL, 0, &dJunk, NULL, NULL );
     #endif
     char *buf = new char[BUFSIZ];
-    Core core;
     string message;
     do {
         
