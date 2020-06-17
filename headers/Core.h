@@ -1,10 +1,21 @@
-#ifdef RPI
-    #include <sys/socket.h> 
-#else
+#if defined(WIN32)
     #include <winsock2.h>
     #define LAN_IP "192.168.1.50"
     #include <ws2tcpip.h>
     #include <Iphlpapi.h>
+#else
+    #include <sys/types.h> 
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <string.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+    #define INVALID_SOCKET -1
+    #define SOCKET_ERROR -1
+    #define LAN_IP "192.168.1.48"
+
+
+   
 #endif
 
 #include <iostream>
@@ -43,6 +54,7 @@ class Core{
         void startClientServerComunication();
         int getNewSensorID();
         bool isFutureReady(shared_future<string> fut);
+        
 
     public:
         Core(); 

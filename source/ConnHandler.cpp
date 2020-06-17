@@ -6,23 +6,24 @@ ConnHandler::ConnHandler() {
 }
 
 void ConnHandler::setupServerSocket() {
-    #ifndef RPI
+    #ifdef WIN32
         WSADATA WSAData;
         if (WSAStartup(MAKEWORD(2, 2), &WSAData)){
             throw "WSA Error";
         }
-    #endif
+    
 
     struct sockaddr_in *address;
     struct addrinfo *result = NULL;
     struct addrinfo hints;
+    
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_protocol = PROTOCOL;
     hints.ai_flags = AI_PASSIVE;
-    char recvbuf[512];
-    int recvbuflen = 512;
+    char recvbuf[BUFSIZ];
+    int recvbuflen = BUFSIZ;
 
     int iResult = getaddrinfo(LAN_IP, PORT, &hints, &result);
     if (iResult != 0) {
@@ -34,7 +35,8 @@ void ConnHandler::setupServerSocket() {
     char *ciao = inet_ntoa(address->sin_addr);
     std::cout << address->sin_port << std::endl;
     //
-
+    
+    
     serverSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 
     if (bind(serverSocket, result->ai_addr, (int)result->ai_addrlen)) {
@@ -47,10 +49,21 @@ void ConnHandler::setupServerSocket() {
     if (iResult == SOCKET_ERROR) {
         throw "Listen failed with error:" + WSAGetLastError();
     }
+    #endif
+    struct sockaddr_in serv_addr, cli_addr;
+    int serverSocket = socket(DOMAIN, TRANSPORT, 0);
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    int portno = atoi(PORT);
+    serv_addr.sin_family = AF_INET;
+    inet_pton(DOMAIN, LAN_IP, &serv_addr.sin_addr.s_addr);
+    serv_addr.sin_port = htons(portno);
+    if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 
+            throw "Bind failed";
+    listen(serverSocket, MAX_CLIENTS);
 }
 
 void ConnHandler::startClientServerComunication() {
-    const int MAX_CLIENTS = 10;
+    
     list<std::thread> clientThreads;
     int i = 0;
     while(true) {
@@ -78,7 +91,7 @@ void ConnHandler::startClientServerComunication() {
         }
     }
     closesocket(serverSocket);
-    #ifndef RPI
+    #ifdef WIN32
         WSACleanup();
     #endif
 }
