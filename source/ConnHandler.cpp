@@ -57,10 +57,7 @@ void ConnHandler::setupServerSocket() {
     bzero((char *) &serv_addr, sizeof(serv_addr));
     int portno = atoi(PORT);
     serv_addr.sin_family = AF_INET;
-
-    stringstream strValue;
-    strValue << LAN_IP;
-    strValue >> serv_addr.sin_addr.s_addr;
+    serv_addr.sin_addr.s_addr = inet_addr(LAN_IP);
     serv_addr.sin_port = htons(portno);
     if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         cout << "qua" << endl;
