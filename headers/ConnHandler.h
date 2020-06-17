@@ -19,7 +19,7 @@ using namespace std;
 class ConnHandler {
     private:
         int serverSocket;
-        Core core;
+        //Core core;
         const int MAX_CLIENTS = 10;
         mutex mCore;
 

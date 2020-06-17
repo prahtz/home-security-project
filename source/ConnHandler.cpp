@@ -61,8 +61,8 @@ void ConnHandler::setupServerSocket() {
     cout << s <<endl;
     serv_addr.sin_port = htons(portno);
     if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        throw "Bind failed";
         cout << "qua" << endl;
+        throw "Bind failed";
     }
     listen(serverSocket, MAX_CLIENTS);
     #endif
@@ -112,8 +112,10 @@ void ConnHandler::clientThread(int clientSocket) {
         WSAIoctl(clientSocket, SIO_KEEPALIVE_VALS, &KeepAlive, sizeof( KeepAlive ), NULL, 0, &dJunk, NULL, NULL );
     #endif
     char *buf = new char[BUFSIZ];
+    Core core;
     string message;
     do {
+        
         message = core.getMessage(clientSocket);
         if(message == Message::ACTIVATE_ALARM) {
             mCore.lock();
