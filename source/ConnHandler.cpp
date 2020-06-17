@@ -62,12 +62,14 @@ void ConnHandler::setupServerSocket() {
     int reuseaddr = 1;
     int reuseport = 1;
     setsockopt(serverSocket, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
-    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
-    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &reuseaddr, sizeof(int));
+    //setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
+    //setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &reuseaddr, sizeof(int));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(LAN_IP);
     serv_addr.sin_port = htons(portno);
     
+    //serv_addr.sin_addr.s_addr = INADDR_ANY;
+
     if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         cout << "qua" << endl;
         throw "Bind failed";
@@ -82,8 +84,10 @@ void ConnHandler::startClientServerComunication() {
     int i = 0;
     while(true) {
         int clientSocket = INVALID_SOCKET;
-        while(clientSocket == INVALID_SOCKET)
+        while(clientSocket == INVALID_SOCKET) {
             clientSocket = accept(serverSocket, NULL, NULL);
+            cout << clientSocket;
+        }
         clientThreads.push_back(std::thread(&ConnHandler::clientThread, this, clientSocket));
         i++;
         cout<<i<<endl;
