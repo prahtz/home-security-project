@@ -60,8 +60,10 @@ void ConnHandler::setupServerSocket() {
     int s = inet_pton(DOMAIN, LAN_IP, &serv_addr.sin_addr.s_addr);
     cout << s <<endl;
     serv_addr.sin_port = htons(portno);
-    if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 
+    if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         throw "Bind failed";
+        cout << "qua" << endl;
+    }
     listen(serverSocket, MAX_CLIENTS);
     #endif
 }
