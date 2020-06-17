@@ -18,11 +18,12 @@ class EventHandler {
         void updateKnownFile();
         void onSensorOpen(Sensor* sensor);
         void onSensorClose(Sensor* sensor);
+        void activateDefenses();
         
     public:
         std::condition_variable codeAvailable, newCodeAvailable;
         std::mutex mSensorList, mNewCode, mFile;
-        atomic<bool> registerCode, codeArrived;
+        atomic<bool> registerCode, codeArrived, alarmActivated;
         atomic<code> newCode;
 
         EventHandler(){}

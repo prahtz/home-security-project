@@ -76,16 +76,15 @@ bool Core::removeSensorFromList(Sensor *s, list<Sensor *> *sensorList)
 
 //TEST
 //Return true if alarm is activatable, false otherwise
-bool Core::isAlarmReady(AlarmType at)
+bool Core::isAlarmReady()
 {
-    switch (at)
-    {
-    case COMPLETE:
-        list<Sensor *>::iterator it = std::find_if(activeSensorList.begin(), activeSensorList.end(), [](Sensor *s) { return !s->isSensorReady(); });
-        if (it == activeSensorList.end())
-            return true;
-        break;
+    eventHandler.mSensorList.lock();
+    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [](Sensor *s) { return !s->isSensorReady(); });
+    if (it == knownSensorList.end()) {
+        eventHandler.mSensorList.unlock();
+        return true;
     }
+    eventHandler.mSensorList.unlock();
     return false;
 }
 
@@ -265,4 +264,22 @@ void Core::sendMessage(int clientSocket, string message)
     char *buf = new char[BUFSIZ];
     fillBuffer(buf, message + eom);
     send(clientSocket, buf, message.length() + eom.length(), 0);
+}
+
+void Core::activateAlarm(int clientSocket) {
+    if(isAlarmReady()) {
+        eventHandler.alarmActivated = true;
+        sendMessage(clientSocket, Message::ACTIVATION_SUCCESS);
+    }
+    else 
+        sendMessage(clientSocket, Message::ACTIVATION_FAILED);
+}
+
+void Core::deactivateAlarm(int clientSocket) {
+    eventHandler.alarmActivated = false;
+    sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
+}
+
+void Core::sensorList(int clientSocket) {
+
 }

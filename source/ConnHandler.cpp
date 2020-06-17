@@ -83,13 +83,6 @@ void ConnHandler::startClientServerComunication() {
     #endif
 }
 void ConnHandler::clientThread(int clientSocket) {
-
-    int switcher = 1;	/* 1=KeepAlive On, 0=KeepAlive Off. */
-    int idle = 1;	/* Number of idle seconds before sending a KeepAlive probe. */
-    int interval;	/* How often in seconds to resend an unacked KeepAlive probe. */
-    int count;	/* How many times to resend a KA probe if previous probe was unacked. */
-
-    /* Switch KeepAlive on or off for this side of the socket. */
     #ifdef WIN32
         tcp_keepalive KeepAlive;
         DWORD dJunk;
@@ -104,9 +97,13 @@ void ConnHandler::clientThread(int clientSocket) {
     do {
         message = core.getMessage(clientSocket);
         if(message == Message::ACTIVATE_ALARM) {
-
+            mCore.lock();
+            core.activateAlarm(clientSocket);
+            mCore.unlock();
         }else if (message == Message::DEACTIVATE_ALARM){
-
+            mCore.lock();
+            core.deactivateAlarm(clientSocket);
+            mCore.unlock();
         }else if (message == Message::REGISTER_DOORSENSOR){
             mCore.lock();
             core.registerNewDoorSensor(clientSocket);

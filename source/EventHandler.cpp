@@ -6,6 +6,7 @@ EventHandler::EventHandler(Receiver* receiver, list<Sensor*>* knownSensorList, m
     this->codeMap = codeMap;
     registerCode = false;
     codeArrived = false;
+    alarmActivated = false;
 }
 
 //TO TEST
@@ -48,6 +49,8 @@ void EventHandler::startListening() {
 //TO TEST
 void EventHandler::onSensorOpen(Sensor* sensor) {
     mSensorList.lock();
+    if(alarmActivated) 
+        activateDefenses();
     sensor->setSensorState(OPENED);
     updateKnownFile(); 
     mSensorList.unlock();
@@ -68,4 +71,8 @@ void EventHandler::updateKnownFile() {
         s->writeToFile(out);
     out.close();
     mFile.unlock();
+}
+
+void EventHandler::activateDefenses() {
+    cout<<"SUONA"<<endl;
 }

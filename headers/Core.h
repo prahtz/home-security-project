@@ -50,8 +50,10 @@ class Core{
         string fail = "//null";
         bool addSensorToList(Sensor* s, list<Sensor*>* sensorList);
         bool removeSensorFromList(Sensor* s, list<Sensor*>* sensorList);
-        void activateAlarm(AlarmType at);
-        bool isAlarmReady(AlarmType at);
+        void activateAlarm(int clientSocket);
+        void deactivateAlarm(int clientSocket);
+        void sensorList(int clientSocket);
+        bool isAlarmReady();
         void registerNewDoorSensor(int clientSocke);
         void writeSensorToFile(Sensor* s);
         string getMessage(int clientSocket);

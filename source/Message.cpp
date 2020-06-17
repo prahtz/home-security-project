@@ -8,6 +8,9 @@ const std::string Message::ACK = "4";
 const std::string Message::ABORT = "5";
 const std::string Message::NEXT_CODE = "6";
 const std::string Message::REGISTER_SUCCESS = "7";
+const std::string Message::ACTIVATION_SUCCESS = "8";
+const std::string Message::ACTIVATION_FAILED = "9";
+const std::string Message::DEACTIVATION_SUCCESS = "10";
 
 Message* Message::instance = 0;
 
