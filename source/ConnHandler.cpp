@@ -52,7 +52,7 @@ void ConnHandler::setupServerSocket() {
     #else
 
     struct sockaddr_in serv_addr, cli_addr;
-    int serverSocket = socket(DOMAIN, TRANSPORT, 0);
+    serverSocket = socket(DOMAIN, TRANSPORT, 0);
     cout << serverSocket <<endl;
     bzero((char *) &serv_addr, sizeof(serv_addr));
     int portno = atoi(PORT);
