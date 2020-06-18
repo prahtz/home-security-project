@@ -6,13 +6,14 @@
 #endif
 
 #define BUFFMAX 100
-
+#include "Sensor.h"
 #include <list>
 #include <condition_variable>
 #include <mutex>
 #include <atomic>
 #include <unistd.h>
 using namespace std;
+
 
 class Receiver {
     private:

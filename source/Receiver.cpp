@@ -7,14 +7,13 @@ Receiver::Receiver(int pin) {
 
 void Receiver::startReceiving() {
     wiringPiSetup();
-    rc = RCSwitch();
     rc.enableReceive(pin);
     int buffSize = 0;
     stopReceive = false;
     while(!stopReceive) {
         if (rc.available()) {
     
-            int codeRecieved = rc.getReceivedValue();
+            code codeRecieved = rc.getReceivedValue();
         
             if (codeRecieved == 0) {
                 throw "Codifica sconosciuta";

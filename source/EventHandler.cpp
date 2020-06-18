@@ -4,6 +4,9 @@ EventHandler::EventHandler(Receiver* receiver, list<Sensor*>* knownSensorList, m
     this->receiver = receiver;
     this->knownSensorList = knownSensorList;
     this->codeMap = codeMap;
+
+    syrenCode = 14152368;
+
     registerCode = false;
     codeArrived = false;
     alarmActivated = false;
@@ -74,5 +77,7 @@ void EventHandler::updateKnownFile() {
 }
 
 void EventHandler::activateDefenses() {
-    cout<<"SUONA"<<endl;
+    thread transmitterThread = thread(&Transmitter::startTransmitting, &transmitter, &syrenCode);
+    std::unique_lock<mutex> alarmLock(mAlarm);
+    alarmDeactivated.wait(alarmLock, [this] { return !alarmActivated;});
 }

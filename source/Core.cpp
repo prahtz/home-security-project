@@ -267,6 +267,9 @@ void Core::activateAlarm(int clientSocket) {
 
 void Core::deactivateAlarm(int clientSocket) {
     eventHandler.alarmActivated = false;
+    unique_lock<mutex> alarmLock(eventHandler.mAlarm);
+    alarmLock.unlock();
+    eventHandler.alarmDeactivated.notify_all();
     sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
 }
 

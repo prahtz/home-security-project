@@ -1,4 +1,5 @@
 #include "Receiver.h"
+#include "Transmitter.h"
 #include "DoorSensor.h"
 #include "Action.h"
 #include <map>
@@ -15,14 +16,17 @@ class EventHandler {
         list<Sensor*>* knownSensorList;
         map<code, pair<Action, Sensor*>*>* codeMap;
 
+        Transmitter transmitter;
+        code syrenCode;
+
         void updateKnownFile();
         void onSensorOpen(Sensor* sensor);
         void onSensorClose(Sensor* sensor);
         void activateDefenses();
         
     public:
-        std::condition_variable codeAvailable, newCodeAvailable;
-        std::mutex mSensorList, mNewCode, mFile;
+        std::condition_variable codeAvailable, newCodeAvailable, alarmDeactivated;
+        std::mutex mSensorList, mNewCode, mFile, mAlarm;
         atomic<bool> registerCode, codeArrived, alarmActivated;
         atomic<code> newCode;
 

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 
-typedef int code;
+typedef unsigned long code;
 using namespace std;
 
 class Sensor {

@@ -8,6 +8,8 @@ class RCSwitch {
         bool available(){return true;}
         int getReceivedValue();
         void resetAvailable() {}
+        void enableTransmit(int PIN){}
+        void send(unsigned long code, unsigned int bitLength);
 };
 
 int wiringPiSetup();
