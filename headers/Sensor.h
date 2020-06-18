@@ -1,10 +1,10 @@
 #include "State.h"
 #include "SensorTypes.h"
+#include "Definitions.h"
 #include <list>
 #include <fstream>
 #include <iostream>
 
-typedef unsigned long code;
 using namespace std;
 
 class Sensor {

@@ -117,7 +117,7 @@ void ConnHandler::clientThread(int clientSocket) {
         DWORD dJunk;
         KeepAlive.onoff = 1;
         KeepAlive.keepalivetime = 1000;
-        KeepAlive.keepaliveinterval = 100;
+        KeepAlive.keepaliveinterval = 500;
 
         WSAIoctl(clientSocket, SIO_KEEPALIVE_VALS, &KeepAlive, sizeof( KeepAlive ), NULL, 0, &dJunk, NULL, NULL );
     #endif

@@ -41,3 +41,7 @@ code DoorSensor::getOpenCode() {
 code DoorSensor::getCloseCode() {
     return closeCode;
 }
+
+string DoorSensor::getSensorName() {
+    return sensorName;
+}

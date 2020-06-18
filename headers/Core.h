@@ -41,7 +41,6 @@ using namespace std;
 
 class Core{
     private:
-        bool alarmActivated;
         atomic<bool> abortProcedure;
         list<Sensor*> knownSensorList, activeSensorList;
         map<code, pair<Action, Sensor*>*> codeMap;

@@ -77,7 +77,11 @@ void EventHandler::updateKnownFile() {
 }
 
 void EventHandler::activateDefenses() {
-    thread transmitterThread = thread(&Transmitter::startTransmitting, &transmitter, &syrenCode);
+    transmitter.transmissionEnabled = true;
+    thread transmitterThread = thread(&Transmitter::startTransmitting, &transmitter, syrenCode);
     std::unique_lock<mutex> alarmLock(mAlarm);
     alarmDeactivated.wait(alarmLock, [this] { return !alarmActivated;});
+    transmitter.transmissionEnabled = false;
+    transmitterThread.join();
+    cout<< "WAIT EXIT";
 }

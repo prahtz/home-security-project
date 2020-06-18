@@ -2,7 +2,6 @@
 
 Core::Core() : receiver(PIN), eventHandler(&receiver, &knownSensorList, &codeMap)
 {
-    this->alarmActivated = false;
     setupKnownSensors();
 
     receiverThread = thread(&Receiver::startReceiving, &receiver);
@@ -22,6 +21,7 @@ void Core::setupKnownSensors()
             istringstream streamString(line);
             string field;
             getline(streamString, field, ';');
+            cout<<field<<endl;
             switch (stoi(field))
             {
             case DOOR_SENSOR:
@@ -32,10 +32,11 @@ void Core::setupKnownSensors()
                 ds->setSensorState((State)stoi(field));
                 getline(streamString, field, ';');
                 ds->setOpenCode(stoi(field));
-                getline(streamString, field);
+                getline(streamString, field, ';');
                 ds->setCloseCode(stoi(field));
                 getline(streamString, field);
                 ds->setSensorName(field);
+                cout << ds -> getSensorName() <<endl;
                 knownSensorList.push_back(ds);
                 codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
                 codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
@@ -257,7 +258,7 @@ void Core::sendMessage(int clientSocket, string message)
 
 
 void Core::activateAlarm(int clientSocket) {
-    if(isAlarmReady()) {
+    if(isAlarmReady() && !eventHandler.alarmActivated) {
         eventHandler.alarmActivated = true;
         sendMessage(clientSocket, Message::ACTIVATION_SUCCESS);
     }
@@ -266,11 +267,16 @@ void Core::activateAlarm(int clientSocket) {
 }
 
 void Core::deactivateAlarm(int clientSocket) {
-    eventHandler.alarmActivated = false;
-    unique_lock<mutex> alarmLock(eventHandler.mAlarm);
-    alarmLock.unlock();
-    eventHandler.alarmDeactivated.notify_all();
-    sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
+    if(eventHandler.alarmActivated) {
+        eventHandler.alarmActivated = false;
+        unique_lock<mutex> alarmLock(eventHandler.mAlarm);
+        alarmLock.unlock();
+        eventHandler.alarmDeactivated.notify_all();
+        sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
+    }
+    else {
+        sendMessage(clientSocket, Message::DEACTIVATION_FAILED);
+    }
 }
 
 void Core::sensorList(int clientSocket) {

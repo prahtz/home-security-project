@@ -1,3 +1,4 @@
+#pragma once
 #include <unistd.h>
 class RCSwitch {
     private:
@@ -9,7 +10,7 @@ class RCSwitch {
         int getReceivedValue();
         void resetAvailable() {}
         void enableTransmit(int PIN){}
-        void send(unsigned long code, unsigned int bitLength);
+        void send(unsigned long code, unsigned int bitLength) {}
 };
 
 int wiringPiSetup();

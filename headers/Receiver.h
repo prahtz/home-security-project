@@ -5,8 +5,9 @@
     #include "RCSim.h"
 #endif
 
+#include "Definitions.h"
+
 #define BUFFMAX 100
-#include "Sensor.h"
 #include <list>
 #include <condition_variable>
 #include <mutex>

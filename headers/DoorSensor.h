@@ -8,12 +8,13 @@ class DoorSensor : public Sensor {
         string sensorName;
     public:
         DoorSensor();
-        DoorSensor(int sensorID, State state, int openCode, int closeCode, string sensorName);
+        DoorSensor(int sensorID, State state, code openCode, code closeCode, string sensorName);
         list<code> getCodeList();
         void setOpenCode(code openCode);
         void setCloseCode(code closeCode);
         void setSensorName(string sensorName);
         code getOpenCode();
         code getCloseCode();
+        string getSensorName();
         void writeToFile(ofstream &out);      
 };

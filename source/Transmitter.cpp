@@ -10,9 +10,11 @@ Transmitter::Transmitter() {
 }
 
 void Transmitter::startTransmitting(code code) {
+    cout << "START TRANSMITTING" << endl;
     while(transmissionEnabled) {
         rc.send(code, bitLength);
         usleep(transmitDelay);
     } 
+    cout << "STOP TRANSMITTING" << endl;
 }
 

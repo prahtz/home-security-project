@@ -5,8 +5,12 @@
     #include "RCSim.h"
 #endif
 
-#include "Sensor.h"
+#include "Definitions.h"
 #include <atomic>
+#include <mutex>
+#include <iostream> //FOR COUT
+
+using namespace std;
 
 class Transmitter {
     private:
@@ -14,8 +18,10 @@ class Transmitter {
         int pin;
         int bitLength;
         useconds_t transmitDelay;
-        atomic<bool> transmissionEnabled;
     public:
         Transmitter();
+
+        atomic<bool> transmissionEnabled;
+        
         void startTransmitting(code code);
 };
