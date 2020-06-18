@@ -14,15 +14,13 @@ void Receiver::startReceiving() {
         if (rc.available()) {
     
             code codeRecieved = rc.getReceivedValue();
-        
-            if (codeRecieved == 0) {
-                throw "Codifica sconosciuta";
-            } else {      
-                unique_lock<mutex> lock(mBuff);
-                if(codesBuffer.size() >= BUFFMAX) 
-                    codesBuffer.pop_back();
+            cout << codeRecieved <<endl;
+            if (codeRecieved != 0) {   
+                if(codesBuffer.size() >= 10) {
+                    cout << codesBuffer.back() <<endl;
+                    codesBuffer.pop_back();    
+                }
                 codesBuffer.push_front(codeRecieved);
-                lock.unlock();
                 codeAvailable.notify_all();
             }
             rc.resetAvailable();

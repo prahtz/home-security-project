@@ -143,6 +143,7 @@ void Core::registerNewDoorSensor(int clientSocket)
     bool go = true;
     while (go)
     {
+        registerLock.lock();
         eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
             return ((bool)eventHandler.codeArrived) || (bool) abortProcedure;
         });
@@ -165,10 +166,13 @@ void Core::registerNewDoorSensor(int clientSocket)
         }
     }
     eventHandler.registerCode = false;
-    if (!isFutureReady(fut))
+    
+    if (!isFutureReady(fut)) {
+        registerLock.lock();
         eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
             return isFutureReady(fut);
         });
+    }
     try{
         if (abortProcedure)
         {
@@ -200,10 +204,12 @@ void Core::registerNewDoorSensor(int clientSocket)
                 delete ds;
         }
         else
-            throw "Unexpected message";
-    } catch(exception e) {
-        throw "Future wasn't ready";
-    }
+            throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato");
+    } catch(RegisterNewSensorException &e) {
+        cout<<e.what()<<endl;
+        sendMessage(clientSocket, Message::REGISTER_FAILED);
+        return;
+    } 
     
     sendMessage(clientSocket, Message::REGISTER_SUCCESS);
     cout << "Core - FINE" << endl;
@@ -227,7 +233,6 @@ string Core::getMessage(int clientSocket)
             eventHandler.newCodeAvailable.notify_all();
             return message;
         }
-        
         message = message + ((string)buf).substr(0, r);
         if (message.find(eom) != string::npos)
         {
@@ -242,8 +247,6 @@ string Core::getMessage(int clientSocket)
 string Core::getMessageAndNotify(int clientSocket) {
     string message = getMessage(clientSocket);
     abortProcedure = message == Message::ABORT || message == fail;
-    std::unique_lock<mutex> registerLock(eventHandler.mNewCode);
-    registerLock.unlock();
     eventHandler.newCodeAvailable.notify_all();
     return message;
 }

@@ -15,7 +15,9 @@ EventHandler::EventHandler(Receiver* receiver, list<Sensor*>* knownSensorList, m
 //TO TEST
 void EventHandler::startListening() {
     while(true) {
-        unique_lock<mutex> receiverLock(receiver->mBuff);
+
+        unique_lock<mutex> receiverLock(receiver->mBuff);   
+        //usleep(1000000);     
         receiver->codeAvailable.wait(receiverLock, [this] {return !receiver->isBufferEmpty();});
 
         code codeReceived = receiver->popCodeFromBuffer();
@@ -37,11 +39,9 @@ void EventHandler::startListening() {
             cout<<"EventHandler - codeReceived: "<< codeReceived << endl;
             cout<<"EventHandler - registerCode?: "<< registerCode << endl;
             if(registerCode) {
-                unique_lock<mutex> registerLock(mNewCode);
                 newCode = codeReceived;
                 cout<<"EventHandler - newCode: "<< newCode << endl;
                 codeArrived = true;
-                registerLock.unlock();
                 newCodeAvailable.notify_all();
             }
         }

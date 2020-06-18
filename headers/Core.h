@@ -2,7 +2,6 @@
     #include <winsock2.h>
     #define LAN_IP "192.168.1.50"
     #include <ws2tcpip.h>
-    #include <Iphlpapi.h>
 #else
     #include <sys/types.h> 
     #include <sys/socket.h>
@@ -21,7 +20,6 @@
 #include <algorithm>
 #include <thread>
 #include <future>
-#include <exception>
 #include <stdlib.h>
 #include <sstream>
 #include <map>
@@ -31,6 +29,7 @@
 #include "Action.h"
 #include "Message.h"
 #include "MessageType.h"
+#include "Exceptions.h"
 
 
 #define PIN 27

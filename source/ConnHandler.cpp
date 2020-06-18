@@ -6,14 +6,11 @@ ConnHandler::ConnHandler() {
 }
 
 void ConnHandler::setupServerSocket() {
-    #ifdef WIN32
+    #ifdef _WIN32
         WSADATA WSAData;
         if (WSAStartup(MAKEWORD(2, 2), &WSAData)){
             throw "WSA Error";
         }
-    
-
-    struct sockaddr_in *address;
     struct addrinfo *result = NULL;
     struct addrinfo hints;
     
@@ -29,13 +26,6 @@ void ConnHandler::setupServerSocket() {
     if (iResult != 0) {
         throw "Getaddrinfo failed with error: " +  iResult;
     }
-
-    //TEST
-    address = (struct sockaddr_in *)(result->ai_addr);
-    char *ciao = inet_ntoa(address->sin_addr);
-    std::cout << address->sin_port << std::endl;
-    //
-    
     
     serverSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 
@@ -67,8 +57,6 @@ void ConnHandler::setupServerSocket() {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(LAN_IP);
     serv_addr.sin_port = htons(portno);
-    
-    //serv_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         cout << "qua" << endl;
@@ -124,7 +112,6 @@ void ConnHandler::clientThread(int clientSocket) {
     char *buf = new char[BUFSIZ];
     string message;
     do {
-        
         message = core.getMessage(clientSocket);
         if(message == Message::ACTIVATE_ALARM) {
             mCore.lock();

@@ -19,18 +19,11 @@ void Sensor::setSensorState(State state) {
     this->sensorState = state;
 }
 
-//TEST
 bool Sensor::isSensorReady() {
-    if(sensorState == State::CLOSED)
-        return true;
-    return false;
+    return sensorState == State::CLOSED;
 }
 
 void Sensor::writeToFile(ofstream &out) {
     out << sensorID << ";" << sensorState << ";";
 }
-/*
-list<int> Sensor::getCodeList() {
-    cout<<"CAZZO";
-    return list<int>();
-}*/
+

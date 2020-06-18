@@ -14,6 +14,7 @@ class Message{
         static const std::string ABORT;
         static const std::string NEXT_CODE;
         static const std::string REGISTER_SUCCESS;
+        static const std::string REGISTER_FAILED;
         static const std::string ACTIVATION_SUCCESS;
         static const std::string ACTIVATION_FAILED;
         static const std::string DEACTIVATION_SUCCESS;

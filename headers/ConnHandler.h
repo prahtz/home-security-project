@@ -26,9 +26,11 @@ class ConnHandler {
         void setupServerSocket();
         void startClientServerComunication();
 
+        #ifndef _WIN32
         int closesocket(int socket) {
                 return close(socket);
         }   
+        #endif
     public:
         ConnHandler();
         void clientThread(int clientSocket);
