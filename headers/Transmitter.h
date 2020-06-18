@@ -5,6 +5,7 @@
     #include "RCSim.h"
 #endif
 
+#include <unistd.h>
 #include "Definitions.h"
 #include <atomic>
 #include <mutex>
