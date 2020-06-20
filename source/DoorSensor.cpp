@@ -17,12 +17,6 @@ list<code> DoorSensor::getCodeList() {
     return codeList;
 }
 
-void DoorSensor::writeToFile(ofstream &out) {
-    out << DOOR_SENSOR << ";";
-    Sensor::writeToFile(out);
-    out<<openCode<<";"<<closeCode<<";"<<sensorName<<endl;
-}
-
 void DoorSensor::setOpenCode(code openCode) {
     this->openCode = openCode;
 }
@@ -44,4 +38,14 @@ code DoorSensor::getCloseCode() {
 
 string DoorSensor::getSensorName() {
     return sensorName;
+}
+
+void DoorSensor::writeToFile(ofstream &out) {
+    out << DOOR_SENSOR << ";";
+    Sensor::writeToFile(out);
+    out<<openCode<<";"<<closeCode<<";"<<sensorName<<endl;
+}
+
+string DoorSensor::getSensorInfo() {
+    return to_string(DOOR_SENSOR) + SEPARATOR + Sensor::getSensorInfo() + SEPARATOR + to_string(openCode) + SEPARATOR + to_string(closeCode) + SEPARATOR + sensorName;
 }

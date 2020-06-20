@@ -143,7 +143,6 @@ void Core::registerNewDoorSensor(int clientSocket)
     bool go = true;
     while (go)
     {
-        registerLock.lock();
         eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
             return ((bool)eventHandler.codeArrived) || (bool) abortProcedure;
         });
@@ -168,7 +167,6 @@ void Core::registerNewDoorSensor(int clientSocket)
     eventHandler.registerCode = false;
     
     if (!isFutureReady(fut)) {
-        registerLock.lock();
         eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
             return isFutureReady(fut);
         });
@@ -177,7 +175,6 @@ void Core::registerNewDoorSensor(int clientSocket)
         if (abortProcedure)
         {
             cout << "Abort...";
-            eventHandler.registerCode = false;
             delete ds;
             return;
         }
@@ -208,6 +205,7 @@ void Core::registerNewDoorSensor(int clientSocket)
     } catch(RegisterNewSensorException &e) {
         cout<<e.what()<<endl;
         sendMessage(clientSocket, Message::REGISTER_FAILED);
+        delete ds;
         return;
     } 
     
@@ -283,5 +281,9 @@ void Core::deactivateAlarm(int clientSocket) {
 }
 
 void Core::sensorList(int clientSocket) {
-
+    eventHandler.mSensorList.lock();
+    for(Sensor* s : knownSensorList) 
+        sendMessage(clientSocket, s->getSensorInfo());
+    eventHandler.mSensorList.unlock();
+    sendMessage(clientSocket, Message::END_SENSOR_LIST);
 }

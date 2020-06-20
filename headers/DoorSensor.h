@@ -16,5 +16,6 @@ class DoorSensor : public Sensor {
         code getOpenCode();
         code getCloseCode();
         string getSensorName();
-        void writeToFile(ofstream &out);      
+        virtual void writeToFile(ofstream &out);   
+        virtual string getSensorInfo();   
 };

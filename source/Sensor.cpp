@@ -27,3 +27,7 @@ void Sensor::writeToFile(ofstream &out) {
     out << sensorID << ";" << sensorState << ";";
 }
 
+string Sensor::getSensorInfo() {
+    return to_string(sensorID) + SEPARATOR + to_string(sensorState);
+}
+

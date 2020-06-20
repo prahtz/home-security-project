@@ -126,7 +126,9 @@ void ConnHandler::clientThread(int clientSocket) {
             core.registerNewDoorSensor(clientSocket);
             mCore.unlock();
         }else if (message == Message::SENSOR_LIST){
-            
+            mCore.lock();
+            core.sensorList(clientSocket);
+            mCore.unlock();
         } 
     }while(message != core.fail);
     cout<<"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"<<endl;

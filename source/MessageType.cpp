@@ -1,7 +1,7 @@
 #include "MessageType.h"
 
-const std::string MessageType::MESSAGE = "0";
-const std::string MessageType::STRING = "1";
+const std::string MessageType::MESSAGE = "a";
+const std::string MessageType::STRING = "b";
 
 MessageType* MessageType::instance = 0;
 

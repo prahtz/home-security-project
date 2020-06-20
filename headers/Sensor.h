@@ -21,5 +21,6 @@ class Sensor {
         bool isSensorReady();
         virtual list<code> getCodeList() {return list<code>();}
         virtual void writeToFile(ofstream &out);
+        virtual string getSensorInfo();
         /*virtual bool isSensorReady();*/
 };

@@ -19,5 +19,6 @@ class Message{
         static const std::string ACTIVATION_FAILED;
         static const std::string DEACTIVATION_SUCCESS;
         static const std::string DEACTIVATION_FAILED;
+        static const std::string END_SENSOR_LIST;
         static Message* getInstance();
 };
