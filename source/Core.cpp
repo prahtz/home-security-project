@@ -3,7 +3,6 @@
 Core::Core() : receiver(PIN), eventHandler(&receiver, &knownSensorList, &codeMap)
 {
     setupKnownSensors();
-
     receiverThread = thread(&Receiver::startReceiving, &receiver);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
 };
@@ -21,7 +20,6 @@ void Core::setupKnownSensors()
             istringstream streamString(line);
             string field;
             getline(streamString, field, ';');
-            cout<<field<<endl;
             switch (stoi(field))
             {
             case DOOR_SENSOR:
@@ -31,12 +29,13 @@ void Core::setupKnownSensors()
                 getline(streamString, field, ';');
                 ds->setSensorState((State)stoi(field));
                 getline(streamString, field, ';');
+                ds->isEnabled((bool) stoi(field));
+                getline(streamString, field, ';');
                 ds->setOpenCode(stoi(field));
                 getline(streamString, field, ';');
                 ds->setCloseCode(stoi(field));
                 getline(streamString, field);
                 ds->setSensorName(field);
-                cout << ds -> getSensorName() <<endl;
                 knownSensorList.push_back(ds);
                 codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
                 codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
@@ -54,27 +53,26 @@ void Core::setupKnownSensors()
 
 //TEST
 //Return true if sensor added, false otherwise
-bool Core::addSensorToList(Sensor *s, list<Sensor *> *sensorList)
+bool Core::addSensorToList(Sensor *s)
 {
-    list<Sensor *>::iterator it = std::find_if(sensorList->begin(), sensorList->end(), [s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
-    if (it == sensorList->end())
+    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
+    if (it == knownSensorList.end())
     {
-        sensorList->push_back(s);
+        knownSensorList.push_back(s);
         return true;
     }
     return false;
 };
 //TEST
 //Return true if sensor removed, false otherwise
-bool Core::removeSensorFromList(Sensor *s, list<Sensor *> *sensorList)
+bool Core::removeSensorFromList(Sensor *s)
 {
-    int listSize = sensorList->size();
-    sensorList->remove_if([s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
-    if (listSize != sensorList->size())
+    int listSize = knownSensorList.size();
+    knownSensorList.remove_if([s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
+    if (listSize != knownSensorList.size())
         return true;
     return false;
 };
-
 //TEST
 //Return true if alarm is activatable, false otherwise
 bool Core::isAlarmReady()
@@ -185,8 +183,9 @@ void Core::registerNewDoorSensor(int clientSocket)
             if (sensorName != fail && sensorName != Message::ABORT)
             {
                 ds->setSensorName(sensorName);
+                ds->isEnabled(true);
                 eventHandler.mSensorList.lock();
-                addSensorToList(ds, &knownSensorList);
+                addSensorToList(ds);
                 eventHandler.mSensorList.unlock();
                 eventHandler.mFile.lock();
                 ofstream out(KNOWN_PATH, ios::app);

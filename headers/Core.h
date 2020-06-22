@@ -41,7 +41,7 @@ using namespace std;
 class Core{
     private:
         atomic<bool> abortProcedure;
-        list<Sensor*> knownSensorList, activeSensorList;
+        list<Sensor*> knownSensorList;
         map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
         EventHandler eventHandler;
@@ -58,8 +58,8 @@ class Core{
         Core(); 
         string eom = "//eom";
         string fail = "//null";
-        bool addSensorToList(Sensor* s, list<Sensor*>* sensorList);
-        bool removeSensorFromList(Sensor* s, list<Sensor*>* sensorList);
+        bool addSensorToList(Sensor* s);
+        bool removeSensorFromList(Sensor* s);
         void activateAlarm(int clientSocket);
         void deactivateAlarm(int clientSocket);
         void sensorList(int clientSocket);

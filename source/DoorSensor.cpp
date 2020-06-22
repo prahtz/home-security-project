@@ -4,7 +4,7 @@ DoorSensor::DoorSensor() : Sensor() {
     
 }
 
-DoorSensor::DoorSensor(int sensorID, State state, code openCode, code closeCode, string sensorName) : Sensor(sensorID, state){
+DoorSensor::DoorSensor(int sensorID, State state, bool enabled, code openCode, code closeCode, string sensorName) : Sensor(sensorID, state, enabled){
     this->openCode = openCode;
     this->closeCode = closeCode;
     this->sensorName = sensorName;

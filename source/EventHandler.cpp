@@ -52,7 +52,7 @@ void EventHandler::startListening() {
 //TO TEST
 void EventHandler::onSensorOpen(Sensor* sensor) {
     mSensorList.lock();
-    if(alarmActivated) 
+    if(alarmActivated && sensor->isEnabled())
         activateDefenses();
     sensor->setSensorState(OPENED);
     updateKnownFile(); 
