@@ -14,6 +14,7 @@ const std::string Message::ACTIVATION_FAILED = "10";
 const std::string Message::DEACTIVATION_SUCCESS = "11";
 const std::string Message::DEACTIVATION_FAILED = "12";
 const std::string Message::END_SENSOR_LIST = "13";
+const std::string Message::TIME_OUT = "14";
 
 Message* Message::instance = 0;
 

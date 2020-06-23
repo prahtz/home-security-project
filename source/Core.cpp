@@ -118,7 +118,8 @@ void Core::registerNewDoorSensor(int clientSocket)
 
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(eventHandler.mNewCode);
-    eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
+    
+    bool notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30) ,[this, &fut] {
         return (bool)eventHandler.codeArrived || (bool)abortProcedure;
     });
 
@@ -129,6 +130,13 @@ void Core::registerNewDoorSensor(int clientSocket)
         delete ds;
         return;
 
+    }
+    if(!notTimedOut) {
+        cout << "Timed out...";
+        sendMessage(clientSocket, Message::TIME_OUT);
+        eventHandler.registerCode = false;
+        delete ds;
+        return;
     }
 
     eventHandler.codeArrived = false;
@@ -141,13 +149,20 @@ void Core::registerNewDoorSensor(int clientSocket)
     bool go = true;
     while (go)
     {
-        eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
+        notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30) ,[this, &fut] {
             return ((bool)eventHandler.codeArrived) || (bool) abortProcedure;
         });
 
         if (abortProcedure)
         {
             cout << "Abort...";
+            eventHandler.registerCode = false;
+            delete ds;
+            return;
+        }
+        if(!notTimedOut) {
+            cout << "Timed out...";
+            sendMessage(clientSocket, Message::TIME_OUT);
             eventHandler.registerCode = false;
             delete ds;
             return;
@@ -165,7 +180,7 @@ void Core::registerNewDoorSensor(int clientSocket)
     eventHandler.registerCode = false;
     
     if (!isFutureReady(fut)) {
-        eventHandler.newCodeAvailable.wait(registerLock, [this, &fut] {
+        notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30),[this, &fut] {
             return isFutureReady(fut);
         });
     }
@@ -173,6 +188,13 @@ void Core::registerNewDoorSensor(int clientSocket)
         if (abortProcedure)
         {
             cout << "Abort...";
+            delete ds;
+            return;
+        }
+        if(!notTimedOut) {
+            cout << "Timed out...";
+            sendMessage(clientSocket, Message::TIME_OUT);
+            eventHandler.registerCode = false;
             delete ds;
             return;
         }
