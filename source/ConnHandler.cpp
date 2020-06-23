@@ -105,10 +105,23 @@ void ConnHandler::clientThread(int clientSocket) {
         DWORD dJunk;
         KeepAlive.onoff = 1;
         KeepAlive.keepalivetime = 1000;
-        KeepAlive.keepaliveinterval = 500;
+        KeepAlive.keepaliveinterval = 1000;
 
         WSAIoctl(clientSocket, SIO_KEEPALIVE_VALS, &KeepAlive, sizeof( KeepAlive ), NULL, 0, &dJunk, NULL, NULL );
+    #else
+        int yes = 1;
+        setsockopt(clientSocket, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));
+        int idle = 1;
+        setsockopt(clientSocket, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int));
+
+        int interval = 1;
+        setsockopt(clientSocket, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int));
+
+        int maxpkt = 10;
+        setsockopt(clientSocket, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
+
     #endif
+
     char *buf = new char[BUFSIZ];
     string message;
     do {
