@@ -33,7 +33,7 @@
 #include "Exceptions.h"
 
 
-#define PIN 27
+#define PIN 25
 #define KNOWN_PATH "./csv/known.csv"
 
 

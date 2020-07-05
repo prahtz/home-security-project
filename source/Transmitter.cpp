@@ -2,7 +2,7 @@
 
 Transmitter::Transmitter() {
     wiringPiSetup();
-    pin = 28;
+    pin = 24;
     bitLength = 24;
     transmitDelay = 100;
     rc.enableTransmit(pin);
