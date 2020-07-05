@@ -11,7 +11,7 @@ class RegisterNewSensorException : runtime_error{
     }
 };
 
-class UnexpectedMessageException : RegisterNewSensorException{
+class UnexpectedMessageException : public RegisterNewSensorException{
     public:
     UnexpectedMessageException(const char* what) : RegisterNewSensorException(what) {}
 };

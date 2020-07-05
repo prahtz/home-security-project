@@ -143,6 +143,16 @@ void ConnHandler::clientThread(int clientSocket) {
             core.sensorList(clientSocket);
             mCore.unlock();
         } 
+        else if(message.substr(message.length() - Message::DEACTIVATE_SENSOR.length(), message.length()) == Message::DEACTIVATE_SENSOR) {
+            mCore.lock();
+            core.deactivateSensor(clientSocket, message);
+            mCore.unlock();
+        }
+        else if(message.substr(message.length() - Message::ACTIVATE_SENSOR.length(), message.length()) == Message::ACTIVATE_SENSOR) {
+            mCore.lock();
+            core.activateSensor(clientSocket, message);
+            mCore.unlock();
+        }
     }while(message != core.fail);
     cout<<"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"<<endl;
     closesocket(clientSocket);

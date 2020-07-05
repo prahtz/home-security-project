@@ -64,6 +64,8 @@ class Core{
         void activateAlarm(int clientSocket);
         void deactivateAlarm(int clientSocket);
         void sensorList(int clientSocket);
+        void deactivateSensor(int clientSocket, string message);
+        void activateSensor(int clientSocket, string message);
         bool isAlarmReady();
         void registerNewDoorSensor(int clientSocke);
         void writeSensorToFile(Sensor* s);

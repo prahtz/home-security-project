@@ -308,3 +308,58 @@ void Core::sensorList(int clientSocket) {
     eventHandler.mSensorList.unlock();
     sendMessage(clientSocket, Message::END_SENSOR_LIST);
 }
+
+void Core::deactivateSensor(int clientSocket, string message) {
+    int sensorID = stoi(message.substr(0, message.length() - Message::DEACTIVATE_SENSOR.length() - SEPARATOR.length()));
+    eventHandler.mSensorList.lock();
+    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+    try {
+        if (it != knownSensorList.end())
+        {
+            if((*it)->isEnabled()) {
+                (*it)->isEnabled(false);
+                eventHandler.updateKnownFile();
+                sendMessage(clientSocket, Message::DEACTIVATE_SENSOR_SUCCESS);
+            }
+            else
+                throw SensorAlreadyDisabledException("Sensore già disabilitato!");
+        }
+        else {
+            throw EnabledSensorNonFoundException("Sensore non trovato!");
+        }
+    }
+    catch(DisableSensorException &e) {
+        cout << e.what() << endl;
+        sendMessage(clientSocket, Message::DEACTIVATE_SENSOR_FAILED);
+    }
+    eventHandler.mSensorList.unlock();
+}
+
+void Core::activateSensor(int clientSocket, string message) {
+    int sensorID = stoi(message.substr(0, message.length() - Message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
+    eventHandler.mSensorList.lock();
+    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+    try {
+        if (it != knownSensorList.end())
+        {
+            if(!(*it)->isEnabled()) {
+                if(eventHandler.alarmActivated && (*it)->getSensorState() == OPENED) {
+                    throw SensorOpenedException("Sensore aperto con allarme attivo!");
+                }
+                (*it)->isEnabled(true);
+                eventHandler.updateKnownFile();
+                sendMessage(clientSocket, Message::ACTIVATE_SENSOR_SUCCESS);
+            }
+            else
+                throw SensorAlreadyEnabledException("Sensore già abilitato!");
+        }
+        else {
+            throw DisabledSensorNonFoundException("Sensore non trovato!");
+        }
+    }
+    catch(EnableSensorException &e) {
+        cout << e.what() << endl;
+        sendMessage(clientSocket, Message::ACTIVATE_SENSOR_FAILED);
+    }
+    eventHandler.mSensorList.unlock();
+}

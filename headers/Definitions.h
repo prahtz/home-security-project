@@ -1,4 +1,5 @@
-#pragma once
+
+#include <string>
 
 typedef unsigned long code;
-#define SEPARATOR ";"
+extern std::string SEPARATOR;

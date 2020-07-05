@@ -17,9 +17,9 @@ class EventHandler {
         map<code, pair<Action, Sensor*>*>* codeMap;
 
         Transmitter transmitter;
-        code syrenCode;
+        code activateSirenCode, deactivateSirenCode;
 
-        void updateKnownFile();
+        
         void onSensorOpen(Sensor* sensor);
         void onSensorClose(Sensor* sensor);
         void activateDefenses();
@@ -33,6 +33,7 @@ class EventHandler {
         EventHandler(){}
         EventHandler(Receiver* receiver, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap);
 
+        void updateKnownFile();
         void startListening();
 
 
