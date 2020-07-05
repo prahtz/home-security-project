@@ -13,11 +13,10 @@
 class EventHandler {
     private:
         Receiver* receiver;
+        Transmitter* transmitter;
         list<Sensor*>* knownSensorList;
         map<code, pair<Action, Sensor*>*>* codeMap;
 
-        Transmitter transmitter;
-        code activateSirenCode, deactivateSirenCode;
 
         
         void onSensorOpen(Sensor* sensor);
@@ -25,13 +24,13 @@ class EventHandler {
         void activateDefenses();
         
     public:
-        std::condition_variable codeAvailable, newCodeAvailable, alarmDeactivated;
+        std::condition_variable codeAvailable, newCodeAvailable;
         std::mutex mSensorList, mNewCode, mFile, mAlarm;
         atomic<bool> registerCode, codeArrived, alarmActivated;
         atomic<code> newCode;
 
         EventHandler(){}
-        EventHandler(Receiver* receiver, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap);
+        EventHandler(Receiver* receiver, Transmitter* transmitter, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap);
 
         void updateKnownFile();
         void startListening();

@@ -45,8 +45,9 @@ class Core{
         list<Sensor*> knownSensorList;
         map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
+        Transmitter transmitter;
         EventHandler eventHandler;
-        thread receiverThread, eventHandlerThread;
+        thread receiverThread, eventHandlerThread, transmitterThread;
 
         void setupKnownSensors();
         void startClientServerComunication();

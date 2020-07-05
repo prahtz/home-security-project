@@ -1,9 +1,10 @@
 #include "Core.h"
 
-Core::Core() : receiver(PIN), eventHandler(&receiver, &knownSensorList, &codeMap)
+Core::Core() : receiver(PIN), eventHandler(&receiver, &transmitter, &knownSensorList, &codeMap)
 {
     setupKnownSensors();
     receiverThread = thread(&Receiver::startReceiving, &receiver);
+    transmitterThread = thread(&Transmitter::startTransmitting, &transmitter);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
 };
 
@@ -291,10 +292,16 @@ void Core::activateAlarm(int clientSocket) {
 void Core::deactivateAlarm(int clientSocket) {
     if(eventHandler.alarmActivated) {
         eventHandler.alarmActivated = false;
-        unique_lock<mutex> alarmLock(eventHandler.mAlarm);
-        alarmLock.unlock();
-        eventHandler.alarmDeactivated.notify_all();
+
+        transmitter.mTransmitCode.lock();
+        transmitter.setTransmittingCode(deactivateSirenCode);
+        transmitter.mTransmitCode.unlock();
+        transmitter.transmitCodeChanged.notify_all();
+        
         sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
+
+        usleep(100000);
+        transmitter.isTransmissionEnabled(false);
     }
     else {
         sendMessage(clientSocket, Message::DEACTIVATION_FAILED);

@@ -19,10 +19,15 @@ class Transmitter {
         int pin;
         int bitLength;
         useconds_t transmitDelay;
+        code transmittingCode;
+        mutex mTransmit;
+        atomic<bool> transmissionEnabled, stopTransmitting;
     public:
         Transmitter();
-
-        atomic<bool> transmissionEnabled;
-        
-        void startTransmitting(code code);
+        condition_variable transmitCodeChanged;
+        mutex mTransmitCode;
+        bool isTransmissionEnabled();
+        void isTransmissionEnabled(bool transmissionEnabled);
+        void setTransmittingCode(code transmittingCode);
+        void startTransmitting();
 };

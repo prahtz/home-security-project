@@ -1,12 +1,10 @@
 #include "EventHandler.h"
 
-EventHandler::EventHandler(Receiver* receiver, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap) {
+EventHandler::EventHandler(Receiver* receiver, Transmitter* transmitter, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap) {
     this->receiver = receiver;
+    this->transmitter = transmitter;
     this->knownSensorList = knownSensorList;
     this->codeMap = codeMap;
-
-    activateSirenCode = 14152368;
-    deactivateSirenCode = 14476512;
 
     registerCode = false;
     codeArrived = false;
@@ -78,19 +76,7 @@ void EventHandler::updateKnownFile() {
 }
 
 void EventHandler::activateDefenses() {
-    transmitter.transmissionEnabled = true;
-    thread transmitterThread = thread(&Transmitter::startTransmitting, &transmitter, activateSirenCode);
-    std::unique_lock<mutex> alarmLock(mAlarm);
-    alarmDeactivated.wait(alarmLock, [this] { return !alarmActivated;});
-    transmitter.transmissionEnabled = false;
-    transmitterThread.join();
-
-    transmitter.transmissionEnabled = true;
-    transmitterThread = thread(&Transmitter::startTransmitting, &transmitter, deactivateSirenCode);
-    
-    usleep(100000);
-
-    transmitter.transmissionEnabled = false;
-    transmitterThread.join();
-    cout<< "WAIT EXIT";
+   transmitter->setTransmittingCode(activateSirenCode);
+   transmitter->isTransmissionEnabled(true);
+   transmitter->transmitCodeChanged.notify_all();
 }
