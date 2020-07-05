@@ -9,7 +9,8 @@
 #include "Definitions.h"
 #include <atomic>
 #include <mutex>
-#include <iostream> //FOR COUT
+#include <iostream>
+#include <condition_variable>
 
 using namespace std;
 
