@@ -40,12 +40,23 @@ void EventHandler::startListening()
             }
         }
         else if(codeReceived == ackSirenCode) {
+            if(transmitter->isTransmissionEnabled()) {
+                transmitter->mTransmit.lock();
+                transmitter->isTransmissionEnabled(false);
+                transmitter->mTransmit.unlock();
+                transmitter->startTransmitting.notify_all();
+            }
+        }
+        else if(codeReceived == tamperActiveCode) {
+            defensesActivated = true;
             transmitter->mTransmit.lock();
-            transmitter->isTransmissionEnabled(false);
+            transmitter->setTransmittingCode(ackControlUnitCode);
+            transmitter->isTransmissionEnabled(true);
+            transmitter->isWaitForAck(false);
             transmitter->mTransmit.unlock();
             transmitter->startTransmitting.notify_all();
         }
-        else if(codeReceived != activateSirenCode && codeReceived != deactivateSirenCode) 
+        else if(!isATransmittingCode(codeReceived)) 
         {
             //cout<<"NO " << codeReceived<<endl;
             cout << "EventHandler - codeReceived: " << codeReceived << endl;
@@ -79,6 +90,10 @@ void EventHandler::onSensorClose(Sensor *sensor)
     sensor->setSensorState(CLOSED);
     updateKnownFile();
     mSensorList.unlock();
+}
+
+bool EventHandler::isATransmittingCode(code codeReceived) {
+    return codeReceived == activateSirenCode || codeReceived == deactivateSirenCode || codeReceived == ackControlUnitCode;
 }
 
 void EventHandler::updateKnownFile()

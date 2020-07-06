@@ -290,9 +290,8 @@ void Core::activateAlarm(int clientSocket) {
 }
 
 void Core::deactivateAlarm(int clientSocket) {
-    if(eventHandler.alarmActivated) {
+    if(eventHandler.alarmActivated || eventHandler.defensesActivated) {
         eventHandler.alarmActivated = false;
-
         if(eventHandler.defensesActivated) {
             transmitter.mTransmit.lock();
             transmitter.setTransmittingCode(deactivateSirenCode);
@@ -301,8 +300,6 @@ void Core::deactivateAlarm(int clientSocket) {
             transmitter.startTransmitting.notify_all();
             eventHandler.defensesActivated = false;
         }
-        
-        
         sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
     }
     else {

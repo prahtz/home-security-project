@@ -22,13 +22,15 @@ class Transmitter {
         int bitLength;
         unsigned long transmitDelay;
         code transmittingCode;
-        atomic<bool> transmissionEnabled, stopTransmitting, ackReceived;
+        atomic<bool> transmissionEnabled, stopTransmitting, ackReceived, waitForAck;
     public:
         Transmitter();
         condition_variable startTransmitting;
         mutex mTransmit;
         bool isTransmissionEnabled();
         void isTransmissionEnabled(bool transmissionEnabled);
+        bool isWaitForAck();
+        void isWaitForAck(bool waitForAck);
         void setTransmittingCode(code transmittingCode);
         void startTransmittingProtocol();
 };
