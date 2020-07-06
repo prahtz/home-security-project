@@ -4,7 +4,7 @@ Core::Core() : receiver(PIN), eventHandler(&receiver, &transmitter, &knownSensor
 {
     setupKnownSensors();
     receiverThread = thread(&Receiver::startReceiving, &receiver);
-    transmitterThread = thread(&Transmitter::startTransmitting, &transmitter);
+    transmitterThread = thread(&Transmitter::startTransmittingProtocol, &transmitter);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
 };
 
@@ -293,15 +293,13 @@ void Core::deactivateAlarm(int clientSocket) {
     if(eventHandler.alarmActivated) {
         eventHandler.alarmActivated = false;
 
-        transmitter.mTransmitCode.lock();
+        transmitter.mTransmit.lock();
         transmitter.setTransmittingCode(deactivateSirenCode);
-        transmitter.mTransmitCode.unlock();
-        transmitter.transmitCodeChanged.notify_all();
+        transmitter.isTransmissionEnabled(true);
+        transmitter.mTransmit.unlock();
+        transmitter.startTransmitting.notify_all();
         
         sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
-
-        usleep(100000);
-        transmitter.isTransmissionEnabled(false);
     }
     else {
         sendMessage(clientSocket, Message::DEACTIVATION_FAILED);

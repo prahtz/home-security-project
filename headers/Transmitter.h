@@ -11,6 +11,7 @@
 #include <mutex>
 #include <iostream>
 #include <condition_variable>
+#include <thread>
 
 using namespace std;
 
@@ -19,16 +20,15 @@ class Transmitter {
         RCSwitch rc;
         int pin;
         int bitLength;
-        useconds_t transmitDelay;
+        unsigned long transmitDelay;
         code transmittingCode;
-        mutex mTransmit;
-        atomic<bool> transmissionEnabled, stopTransmitting;
+        atomic<bool> transmissionEnabled, stopTransmitting, ackReceived;
     public:
         Transmitter();
-        condition_variable transmitCodeChanged;
-        mutex mTransmitCode;
+        condition_variable startTransmitting;
+        mutex mTransmit;
         bool isTransmissionEnabled();
         void isTransmissionEnabled(bool transmissionEnabled);
         void setTransmittingCode(code transmittingCode);
-        void startTransmitting();
+        void startTransmittingProtocol();
 };

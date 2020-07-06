@@ -3,4 +3,4 @@
 
 typedef unsigned long code;
 extern std::string SEPARATOR;
-extern code activateSirenCode, deactivateSirenCode;
+extern code activateSirenCode, deactivateSirenCode, ackSirenCode;

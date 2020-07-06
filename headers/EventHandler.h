@@ -16,9 +16,7 @@ class EventHandler {
         Transmitter* transmitter;
         list<Sensor*>* knownSensorList;
         map<code, pair<Action, Sensor*>*>* codeMap;
-
-
-        
+  
         void onSensorOpen(Sensor* sensor);
         void onSensorClose(Sensor* sensor);
         void activateDefenses();
