@@ -1,24 +1,29 @@
 #include "Receiver.h"
 
-Receiver::Receiver(int pin) {
+Receiver::Receiver(int pin)
+{
     this->pin = pin;
     stopReceive = false;
 }
 
-void Receiver::startReceiving() {
+void Receiver::startReceiving()
+{
     wiringPiSetup();
     rc.enableReceive(pin);
     int buffSize = 0;
     stopReceive = false;
-    while(!stopReceive) {
-        if (rc.available()) {
-    
+    while (!stopReceive)
+    {
+        if (rc.available())
+        {
             code codeRecieved = rc.getReceivedValue();
-            cout << codeRecieved <<endl;
-            if (codeRecieved != 0) {   
-                if(codesBuffer.size() >= 10) {
-                    cout << codesBuffer.back() <<endl;
-                    codesBuffer.pop_back();    
+            cout << codeRecieved << endl;
+            if (codeRecieved != 0)
+            {
+                if (codesBuffer.size() >= 10)
+                {
+                    cout << codesBuffer.back() << endl;
+                    codesBuffer.pop_back();
                 }
                 codesBuffer.push_front(codeRecieved);
                 codeAvailable.notify_all();
@@ -28,15 +33,18 @@ void Receiver::startReceiving() {
     }
 }
 
-void Receiver::stopReceiving() {
+void Receiver::stopReceiving()
+{
     stopReceive = true;
 }
 
-bool Receiver::isBufferEmpty() {
+bool Receiver::isBufferEmpty()
+{
     return codesBuffer.empty();
 }
 
-int Receiver::popCodeFromBuffer() {
+int Receiver::popCodeFromBuffer()
+{
     int code = codesBuffer.back();
     codesBuffer.pop_back();
     return code;

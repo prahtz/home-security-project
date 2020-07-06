@@ -293,11 +293,15 @@ void Core::deactivateAlarm(int clientSocket) {
     if(eventHandler.alarmActivated) {
         eventHandler.alarmActivated = false;
 
-        transmitter.mTransmit.lock();
-        transmitter.setTransmittingCode(deactivateSirenCode);
-        transmitter.isTransmissionEnabled(true);
-        transmitter.mTransmit.unlock();
-        transmitter.startTransmitting.notify_all();
+        if(eventHandler.defensesActivated) {
+            transmitter.mTransmit.lock();
+            transmitter.setTransmittingCode(deactivateSirenCode);
+            transmitter.isTransmissionEnabled(true);
+            transmitter.mTransmit.unlock();
+            transmitter.startTransmitting.notify_all();
+            eventHandler.defensesActivated = false;
+        }
+        
         
         sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
     }

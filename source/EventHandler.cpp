@@ -10,6 +10,7 @@ EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, list<Se
     registerCode = false;
     codeArrived = false;
     alarmActivated = false;
+    defensesActivated = false;
 }
 
 
@@ -92,6 +93,7 @@ void EventHandler::updateKnownFile()
 
 void EventHandler::activateDefenses()
 {
+    defensesActivated = true;
     transmitter->mTransmit.lock();
     transmitter->setTransmittingCode(activateSirenCode);
     transmitter->isTransmissionEnabled(true);

@@ -24,7 +24,7 @@ class EventHandler {
     public:
         std::condition_variable codeAvailable, newCodeAvailable;
         std::mutex mSensorList, mNewCode, mFile, mAlarm;
-        atomic<bool> registerCode, codeArrived, alarmActivated;
+        atomic<bool> registerCode, codeArrived, alarmActivated, defensesActivated;
         atomic<code> newCode;
 
         EventHandler(){}
