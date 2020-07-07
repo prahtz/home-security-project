@@ -10,7 +10,7 @@ void Receiver::startReceiving()
 {
     wiringPiSetup();
     rc.enableReceive(pin);
-    int buffSize = 0;
+    int buffSize = 100;
     stopReceive = false;
     while (!stopReceive)
     {
@@ -20,7 +20,7 @@ void Receiver::startReceiving()
             cout << codeRecieved << endl;
             if (codeRecieved != 0)
             {
-                if (codesBuffer.size() >= 10)
+                if (codesBuffer.size() >= buffSize)
                 {
                     cout << codesBuffer.back() << endl;
                     codesBuffer.pop_back();
@@ -45,7 +45,7 @@ bool Receiver::isBufferEmpty()
 
 int Receiver::popCodeFromBuffer()
 {
-    int code = codesBuffer.back();
+    code code = codesBuffer.back();
     codesBuffer.pop_back();
     return code;
 }

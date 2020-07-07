@@ -22,7 +22,7 @@ class Receiver {
         int pin;
         RCSwitch rc;
         atomic<bool> stopReceive;
-        list<int> codesBuffer;
+        list<code> codesBuffer;
     public:
         condition_variable codeAvailable;
         mutex mBuff;

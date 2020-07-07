@@ -7,11 +7,13 @@
 
 #include <unistd.h>
 #include "Definitions.h"
+#include "TransmitMode.h"
 #include <atomic>
 #include <mutex>
 #include <iostream>
 #include <condition_variable>
 #include <thread>
+#include <list>
 
 using namespace std;
 
@@ -21,16 +23,17 @@ class Transmitter {
         int pin;
         int bitLength;
         unsigned long transmitDelay;
+        atomic<bool> stopTransmitting, ackReceived;
+        TransmitMode transmitMode;
         code transmittingCode;
-        atomic<bool> transmissionEnabled, stopTransmitting, ackReceived, waitForAck;
+        list<pair<code, TransmitMode>> codesBuffer;
     public:
         Transmitter();
         condition_variable startTransmitting;
         mutex mTransmit;
-        bool isTransmissionEnabled();
-        void isTransmissionEnabled(bool transmissionEnabled);
-        bool isWaitForAck();
-        void isWaitForAck(bool waitForAck);
-        void setTransmittingCode(code transmittingCode);
+        bool isAckReceived();
+        void isAckReceived(bool ackReceived);
+        void addTransmittingCode(code transmittingCode, TransmitMode transmitMode);
+        code getTransmittingCode();
         void startTransmittingProtocol();
 };

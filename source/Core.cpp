@@ -294,8 +294,7 @@ void Core::deactivateAlarm(int clientSocket) {
         eventHandler.alarmActivated = false;
         if(eventHandler.defensesActivated) {
             transmitter.mTransmit.lock();
-            transmitter.setTransmittingCode(deactivateSirenCode);
-            transmitter.isTransmissionEnabled(true);
+            transmitter.addTransmittingCode(deactivateSirenCode, WAIT_FOR_ACK);
             transmitter.mTransmit.unlock();
             transmitter.startTransmitting.notify_all();
             eventHandler.defensesActivated = false;

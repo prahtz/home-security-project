@@ -8,52 +8,48 @@ Transmitter::Transmitter()
     transmitDelay = 1000;
     rc.enableTransmit(pin);
     transmittingCode = 0;
-    transmissionEnabled = false;
+    transmitMode = WAIT_FOR_ACK;
+    ackReceived = false;
     stopTransmitting = false;
-    waitForAck = true;
 }
 
 void Transmitter::startTransmittingProtocol()
 {
     while (!stopTransmitting)
-    {
-        cout << "START TRANSMITTING" << endl;
+    { 
         unique_lock<mutex> transmitterLock(mTransmit);
-        startTransmitting.wait(transmitterLock, [this] { return isTransmissionEnabled();});
-        while (isTransmissionEnabled() && isWaitForAck())
-        {
-            rc.send(transmittingCode, bitLength);
-            startTransmitting.wait_for(transmitterLock, chrono::milliseconds(transmitDelay), [this] { return !isTransmissionEnabled() || !isWaitForAck(); });
+        startTransmitting.wait(transmitterLock, [this] { return !codesBuffer.empty();});
+        transmittingCode = codesBuffer.back().first;
+        transmitMode = codesBuffer.back().second;
+        codesBuffer.pop_back();
+        switch(transmitMode) {
+            case WAIT_FOR_ACK:
+                while (!isAckReceived())
+                {
+                    rc.send(transmittingCode, bitLength);
+                    startTransmitting.wait_for(transmitterLock, chrono::milliseconds(transmitDelay), [this] { return isAckReceived(); });
+                }
+                transmittingCode = 0;
+                isAckReceived(false);
+                break;
+            case SEND_ACK:
+                rc.send(transmittingCode, bitLength);
         }
-        if(!isWaitForAck()) {
-            rc.send(transmittingCode, bitLength);
-            transmissionEnabled = false;
-            waitForAck = true;
-        }
+        
     }
-    cout << "STOP TRANSMITTING" << endl;
 }
 
-void Transmitter::setTransmittingCode(code transmittingCode)
+void Transmitter::addTransmittingCode(code transmittingCode, TransmitMode transmitMode)
 {
-    this->transmittingCode = transmittingCode;
+    pair<code, TransmitMode> transmit(transmittingCode, transmitMode);
+    codesBuffer.push_front(transmit);
 }
 
-bool Transmitter::isTransmissionEnabled()
+bool Transmitter::isAckReceived()
 {
-    return transmissionEnabled;
+    return ackReceived;
 }
-void Transmitter::isTransmissionEnabled(bool transmissionEnabled)
+void Transmitter::isAckReceived(bool ackReceived)
 {
-    this->transmissionEnabled = transmissionEnabled;
-}
-
-bool Transmitter::isWaitForAck()
-{
-    return waitForAck;
-}
-
-void Transmitter::isWaitForAck(bool waitForAck)
-{
-    this->waitForAck = waitForAck;
+    this->ackReceived = ackReceived;
 }

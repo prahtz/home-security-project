@@ -39,20 +39,30 @@ void EventHandler::startListening()
                 onSensorClose(sensor);
             }
         }
-        else if(codeReceived == ackSirenCode) {
-            if(transmitter->isTransmissionEnabled()) {
-                transmitter->mTransmit.lock();
-                transmitter->isTransmissionEnabled(false);
+        else if(codeReceived == ackActivateCode) {
+            transmitter->mTransmit.lock();
+            if(transmitter->getTransmittingCode() == activateSirenCode) {
+                transmitter->isAckReceived(true);
                 transmitter->mTransmit.unlock();
                 transmitter->startTransmitting.notify_all();
             }
+            else
+                transmitter->mTransmit.unlock();
+        }
+        else if(codeReceived == ackDeactivateCode) {
+            transmitter->mTransmit.lock();
+            if(transmitter->getTransmittingCode() == deactivateSirenCode) {
+                transmitter->isAckReceived(true);
+                transmitter->mTransmit.unlock();
+                transmitter->startTransmitting.notify_all();
+            }
+            else
+                transmitter->mTransmit.unlock();
         }
         else if(codeReceived == tamperActiveCode) {
-            defensesActivated = true;
             transmitter->mTransmit.lock();
-            transmitter->setTransmittingCode(ackControlUnitCode);
-            transmitter->isTransmissionEnabled(true);
-            transmitter->isWaitForAck(false);
+            defensesActivated = true;
+            transmitter->addTransmittingCode(ackControlUnitCode, SEND_ACK);
             transmitter->mTransmit.unlock();
             transmitter->startTransmitting.notify_all();
         }
@@ -110,8 +120,11 @@ void EventHandler::activateDefenses()
 {
     defensesActivated = true;
     transmitter->mTransmit.lock();
-    transmitter->setTransmittingCode(activateSirenCode);
-    transmitter->isTransmissionEnabled(true);
-    transmitter->mTransmit.unlock();
-    transmitter->startTransmitting.notify_all();
+    if(transmitter->getTransmittingCode() != activateSirenCode) {
+        transmitter->addTransmittingCode(activateSirenCode, WAIT_FOR_ACK);
+        transmitter->mTransmit.unlock();
+        transmitter->startTransmitting.notify_all();
+    }
+    else
+        transmitter->mTransmit.unlock();
 }
