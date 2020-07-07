@@ -11,9 +11,9 @@ class RCSwitch {
         RCSwitch() {
             arrayCode[0] = 1;
             arrayCode[1] = 2;
-            arrayCode[2] = ackSirenCode;
+            arrayCode[2] = ackActivateCode;
             arrayCode[3] = 88;
-            arrayCode[4] = ackSirenCode;
+            arrayCode[4] = ackDeactivateCode;
         };
         void enableReceive(int PIN){}
         bool available(){return true;}

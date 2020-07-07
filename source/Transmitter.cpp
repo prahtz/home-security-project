@@ -45,6 +45,10 @@ void Transmitter::addTransmittingCode(code transmittingCode, TransmitMode transm
     codesBuffer.push_front(transmit);
 }
 
+code Transmitter::getTransmittingCode() {
+    return transmittingCode;
+}
+
 bool Transmitter::isAckReceived()
 {
     return ackReceived;
