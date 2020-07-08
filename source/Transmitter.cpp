@@ -34,6 +34,8 @@ void Transmitter::startTransmittingProtocol()
                 break;
             case SEND_ACK:
                 rc.send(transmittingCode, bitLength);
+                rc.send(transmittingCode, bitLength);
+                break;
         }
         
     }

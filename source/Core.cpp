@@ -281,7 +281,7 @@ void Core::sendMessage(int clientSocket, string message)
 
 
 void Core::activateAlarm(int clientSocket) {
-    if(isAlarmReady() && !eventHandler.alarmActivated) {
+    if(isAlarmReady() && !eventHandler.alarmActivated && !eventHandler.defensesActivated) {
         eventHandler.alarmActivated = true;
         sendMessage(clientSocket, Message::ACTIVATION_SUCCESS);
     }
