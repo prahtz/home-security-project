@@ -30,7 +30,7 @@ void Core::setupKnownSensors()
                 getline(streamString, field, ';');
                 ds->setSensorState((State)stoi(field));
                 getline(streamString, field, ';');
-                ds->isEnabled((bool) stoi(field));
+                ds->isEnabled((bool)stoi(field));
                 getline(streamString, field, ';');
                 ds->setOpenCode(stoi(field));
                 getline(streamString, field, ';');
@@ -80,7 +80,8 @@ bool Core::isAlarmReady()
 {
     eventHandler.mSensorList.lock();
     list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [](Sensor *s) { return !s->isSensorReady(); });
-    if (it == knownSensorList.end()) {
+    if (it == knownSensorList.end())
+    {
         eventHandler.mSensorList.unlock();
         return true;
     }
@@ -119,8 +120,8 @@ void Core::registerNewDoorSensor(int clientSocket)
 
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(eventHandler.mNewCode);
-    
-    bool notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30) ,[this, &fut] {
+
+    bool notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30), [this, &fut] {
         return (bool)eventHandler.codeArrived || (bool)abortProcedure;
     });
 
@@ -130,9 +131,9 @@ void Core::registerNewDoorSensor(int clientSocket)
         eventHandler.registerCode = false;
         delete ds;
         return;
-
     }
-    if(!notTimedOut) {
+    if (!notTimedOut)
+    {
         cout << "Timed out...";
         sendMessage(clientSocket, Message::TIME_OUT);
         eventHandler.registerCode = false;
@@ -150,8 +151,8 @@ void Core::registerNewDoorSensor(int clientSocket)
     bool go = true;
     while (go)
     {
-        notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30) ,[this, &fut] {
-            return ((bool)eventHandler.codeArrived) || (bool) abortProcedure;
+        notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30), [this, &fut] {
+            return ((bool)eventHandler.codeArrived) || (bool)abortProcedure;
         });
 
         if (abortProcedure)
@@ -161,7 +162,8 @@ void Core::registerNewDoorSensor(int clientSocket)
             delete ds;
             return;
         }
-        if(!notTimedOut) {
+        if (!notTimedOut)
+        {
             cout << "Timed out...";
             sendMessage(clientSocket, Message::TIME_OUT);
             eventHandler.registerCode = false;
@@ -179,20 +181,23 @@ void Core::registerNewDoorSensor(int clientSocket)
         }
     }
     eventHandler.registerCode = false;
-    
-    if (!isFutureReady(fut)) {
-        notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30),[this, &fut] {
+
+    if (!isFutureReady(fut))
+    {
+        notTimedOut = eventHandler.newCodeAvailable.wait_for(registerLock, chrono::seconds(30), [this, &fut] {
             return isFutureReady(fut);
         });
     }
-    try{
+    try
+    {
         if (abortProcedure)
         {
             cout << "Abort...";
             delete ds;
             return;
         }
-        if(!notTimedOut) {
+        if (!notTimedOut)
+        {
             cout << "Timed out...";
             sendMessage(clientSocket, Message::TIME_OUT);
             eventHandler.registerCode = false;
@@ -224,13 +229,15 @@ void Core::registerNewDoorSensor(int clientSocket)
         }
         else
             throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato");
-    } catch(RegisterNewSensorException &e) {
-        cout<<e.what()<<endl;
+    }
+    catch (RegisterNewSensorException &e)
+    {
+        cout << e.what() << endl;
         sendMessage(clientSocket, Message::REGISTER_FAILED);
         delete ds;
         return;
-    } 
-    
+    }
+
     sendMessage(clientSocket, Message::REGISTER_SUCCESS);
     cout << "Core - FINE" << endl;
 }
@@ -264,7 +271,8 @@ string Core::getMessage(int clientSocket)
     return message;
 }
 
-string Core::getMessageAndNotify(int clientSocket) {
+string Core::getMessageAndNotify(int clientSocket)
+{
     string message = getMessage(clientSocket);
     abortProcedure = message == Message::ABORT || message == fail;
     eventHandler.newCodeAvailable.notify_all();
@@ -278,21 +286,24 @@ void Core::sendMessage(int clientSocket, string message)
     send(clientSocket, buf, message.length() + eom.length(), 0);
 }
 
-
-
-void Core::activateAlarm(int clientSocket) {
-    if(isAlarmReady() && !eventHandler.alarmActivated && !eventHandler.defensesActivated) {
+void Core::activateAlarm(int clientSocket)
+{
+    if (isAlarmReady() && !eventHandler.alarmActivated && !eventHandler.defensesActivated)
+    {
         eventHandler.alarmActivated = true;
         sendMessage(clientSocket, Message::ACTIVATION_SUCCESS);
     }
-    else 
+    else
         sendMessage(clientSocket, Message::ACTIVATION_FAILED);
 }
 
-void Core::deactivateAlarm(int clientSocket) {
-    if(eventHandler.alarmActivated || eventHandler.defensesActivated) {
+void Core::deactivateAlarm(int clientSocket)
+{
+    if (eventHandler.alarmActivated || eventHandler.defensesActivated)
+    {
         eventHandler.alarmActivated = false;
-        if(eventHandler.defensesActivated) {
+        if (eventHandler.defensesActivated)
+        {
             transmitter.mTransmit.lock();
             transmitter.addTransmittingCode(deactivateSirenCode, WAIT_FOR_ACK);
             transmitter.mTransmit.unlock();
@@ -301,27 +312,32 @@ void Core::deactivateAlarm(int clientSocket) {
         }
         sendMessage(clientSocket, Message::DEACTIVATION_SUCCESS);
     }
-    else {
+    else
+    {
         sendMessage(clientSocket, Message::DEACTIVATION_FAILED);
     }
 }
 
-void Core::sensorList(int clientSocket) {
+void Core::sensorList(int clientSocket)
+{
     eventHandler.mSensorList.lock();
-    for(Sensor* s : knownSensorList) 
+    for (Sensor *s : knownSensorList)
         sendMessage(clientSocket, s->getSensorInfo());
     eventHandler.mSensorList.unlock();
     sendMessage(clientSocket, Message::END_SENSOR_LIST);
 }
 
-void Core::deactivateSensor(int clientSocket, string message) {
+void Core::deactivateSensor(int clientSocket, string message)
+{
     int sensorID = stoi(message.substr(0, message.length() - Message::DEACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
     list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-    try {
+    try
+    {
         if (it != knownSensorList.end())
         {
-            if((*it)->isEnabled()) {
+            if ((*it)->isEnabled())
+            {
                 (*it)->isEnabled(false);
                 eventHandler.updateKnownFile();
                 sendMessage(clientSocket, Message::DEACTIVATE_SENSOR_SUCCESS);
@@ -329,26 +345,32 @@ void Core::deactivateSensor(int clientSocket, string message) {
             else
                 throw SensorAlreadyDisabledException("Sensore già disabilitato!");
         }
-        else {
+        else
+        {
             throw EnabledSensorNotFoundException("Sensore non trovato!");
         }
     }
-    catch(DisableSensorException &e) {
+    catch (DisableSensorException &e)
+    {
         cout << e.what() << endl;
         sendMessage(clientSocket, Message::DEACTIVATE_SENSOR_FAILED);
     }
     eventHandler.mSensorList.unlock();
 }
 
-void Core::activateSensor(int clientSocket, string message) {
+void Core::activateSensor(int clientSocket, string message)
+{
     int sensorID = stoi(message.substr(0, message.length() - Message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
     list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-    try {
+    try
+    {
         if (it != knownSensorList.end())
         {
-            if(!(*it)->isEnabled()) {
-                if(eventHandler.alarmActivated && (*it)->getSensorState() == OPENED) {
+            if (!(*it)->isEnabled())
+            {
+                if (eventHandler.alarmActivated && (*it)->getSensorState() == OPENED)
+                {
                     throw SensorOpenedException("Sensore aperto con allarme attivo!");
                 }
                 (*it)->isEnabled(true);
@@ -358,35 +380,45 @@ void Core::activateSensor(int clientSocket, string message) {
             else
                 throw SensorAlreadyEnabledException("Sensore già abilitato!");
         }
-        else {
+        else
+        {
             throw DisabledSensorNotFoundException("Sensore non trovato!");
         }
     }
-    catch(EnableSensorException &e) {
+    catch (EnableSensorException &e)
+    {
         cout << e.what() << endl;
         sendMessage(clientSocket, Message::ACTIVATE_SENSOR_FAILED);
     }
     eventHandler.mSensorList.unlock();
 }
 
-void Core::removeSensor(int clientSocket, string message) {
+void Core::removeSensor(int clientSocket, string message)
+{
     int sensorID = stoi(message.substr(0, message.length() - Message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
+    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
 
     int listSize = knownSensorList.size();
     knownSensorList.remove_if([sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-    
-    try {
-        if (listSize != knownSensorList.size())
+
+    try
+    {
+        if (it != knownSensorList.end())
         {
+            for (code sensorCode : (*it)->getCodeList())
+                codeMap.erase(sensorCode);
+            knownSensorList.erase(it);
             eventHandler.updateKnownFile();
             sendMessage(clientSocket, Message::REMOVE_SENSOR_SUCCESS);
         }
-        else {
+        else
+        {
             throw SensorNotFoundException("Sensore non trovato!");
         }
     }
-    catch(RemoveSensorException &e) {
+    catch (RemoveSensorException &e)
+    {
         cout << e.what() << endl;
         sendMessage(clientSocket, Message::REMOVE_SENSOR_FAILED);
     }
