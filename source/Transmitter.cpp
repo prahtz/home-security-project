@@ -33,8 +33,9 @@ void Transmitter::startTransmittingProtocol()
                 isAckReceived(false);
                 break;
             case SEND_ACK:
+                rc.setRepeatTransmit(20);
                 rc.send(transmittingCode, bitLength);
-                rc.send(transmittingCode, bitLength);
+                rc.setRepeatTransmit(10);
                 break;
         }
         

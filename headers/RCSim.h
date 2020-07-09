@@ -23,6 +23,9 @@ class RCSwitch {
         void send(unsigned long code, unsigned int bitLength) {
             std::cout<< code << std::endl;
         }
+        void setRepeatTransmit(int a) {
+
+        }
 };
 
 int wiringPiSetup();
