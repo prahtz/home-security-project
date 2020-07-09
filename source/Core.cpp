@@ -399,9 +399,6 @@ void Core::removeSensor(int clientSocket, string message)
     eventHandler.mSensorList.lock();
     list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
 
-    int listSize = knownSensorList.size();
-    knownSensorList.remove_if([sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-
     try
     {
         if (it != knownSensorList.end())
