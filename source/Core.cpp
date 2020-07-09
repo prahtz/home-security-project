@@ -330,7 +330,7 @@ void Core::deactivateSensor(int clientSocket, string message) {
                 throw SensorAlreadyDisabledException("Sensore già disabilitato!");
         }
         else {
-            throw EnabledSensorNonFoundException("Sensore non trovato!");
+            throw EnabledSensorNotFoundException("Sensore non trovato!");
         }
     }
     catch(DisableSensorException &e) {
@@ -359,12 +359,36 @@ void Core::activateSensor(int clientSocket, string message) {
                 throw SensorAlreadyEnabledException("Sensore già abilitato!");
         }
         else {
-            throw DisabledSensorNonFoundException("Sensore non trovato!");
+            throw DisabledSensorNotFoundException("Sensore non trovato!");
         }
     }
     catch(EnableSensorException &e) {
         cout << e.what() << endl;
         sendMessage(clientSocket, Message::ACTIVATE_SENSOR_FAILED);
+    }
+    eventHandler.mSensorList.unlock();
+}
+
+void Core::removeSensor(int clientSocket, string message) {
+    int sensorID = stoi(message.substr(0, message.length() - Message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
+    eventHandler.mSensorList.lock();
+
+    int listSize = knownSensorList.size();
+    knownSensorList.remove_if([sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+    
+    try {
+        if (listSize != knownSensorList.size())
+        {
+            eventHandler.updateKnownFile();
+            sendMessage(clientSocket, Message::REMOVE_SENSOR_SUCCESS);
+        }
+        else {
+            throw SensorNotFoundException("Sensore non trovato!");
+        }
+    }
+    catch(RemoveSensorException &e) {
+        cout << e.what() << endl;
+        sendMessage(clientSocket, Message::REMOVE_SENSOR_FAILED);
     }
     eventHandler.mSensorList.unlock();
 }

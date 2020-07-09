@@ -21,6 +21,9 @@ const std::string Message::DEACTIVATE_SENSOR_FAILED = "11";
 const std::string Message::ACTIVATE_SENSOR = "12";
 const std::string Message::ACTIVATE_SENSOR_SUCCESS = "13";
 const std::string Message::ACTIVATE_SENSOR_FAILED = "14";
+const std::string Message::REMOVE_SENSOR = "15";
+const std::string Message::REMOVE_SENSOR_SUCCESS = "16";
+const std::string Message::REMOVE_SENSOR_FAILED = "17";
 
 Message* Message::instance = 0;
 

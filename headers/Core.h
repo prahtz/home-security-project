@@ -65,6 +65,7 @@ class Core{
         void activateAlarm(int clientSocket);
         void deactivateAlarm(int clientSocket);
         void sensorList(int clientSocket);
+        void removeSensor(int clientSocket, string message);
         void deactivateSensor(int clientSocket, string message);
         void activateSensor(int clientSocket, string message);
         bool isAlarmReady();

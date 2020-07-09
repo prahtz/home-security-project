@@ -11,9 +11,9 @@ class EnableSensorException : runtime_error{
     }
 };
 
-class DisabledSensorNonFoundException : public EnableSensorException{
+class DisabledSensorNotFoundException : public EnableSensorException{
     public:
-    DisabledSensorNonFoundException(const char* what) : EnableSensorException(what) {}
+    DisabledSensorNotFoundException(const char* what) : EnableSensorException(what) {}
 };
 
 class SensorAlreadyEnabledException : public EnableSensorException{

@@ -27,5 +27,8 @@ class Message{
         static const std::string ACTIVATE_SENSOR;
         static const std::string ACTIVATE_SENSOR_SUCCESS;
         static const std::string ACTIVATE_SENSOR_FAILED;
+        static const std::string REMOVE_SENSOR;
+        static const std::string REMOVE_SENSOR_SUCCESS;
+        static const std::string REMOVE_SENSOR_FAILED;
         static Message* getInstance();
 };
