@@ -11,3 +11,5 @@ code ackDeactivateCode = 13357324;
 code ackControlUnitCode = 12343212;
 code ackEnableTamperCode = 16752004;
 
+std::condition_variable statical::sharedCondition;
+std::mutex statical::mSharedCondition;

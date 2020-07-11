@@ -5,7 +5,7 @@
 
 class RCSwitch {
     private:
-        int var = 0;
+        int var = 1;
         code arrayCode[100];
     public:
         RCSwitch() {

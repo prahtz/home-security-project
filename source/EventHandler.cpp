@@ -76,7 +76,7 @@ void EventHandler::startListening()
                 newCode = codeReceived;
                 cout << "EventHandler - newCode: " << newCode << endl;
                 codeArrived = true;
-                newCodeAvailable.notify_all();
+                statical::sharedCondition.notify_all();
             }
         }
     }
