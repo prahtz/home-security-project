@@ -5,8 +5,12 @@ int gatePin = 12;
 int txTransmitter = 13;
 int txTamper = 11;
 int rxTamper = 10;
+
+unsigned long MAX_TAMPER_LOW = 100000;
+unsigned long tamperLowCount = 0;
 bool tamperActive = false;
 bool tamperEnabled = true;
+
 unsigned long activateSirenCode = 14152368;
 unsigned long deactivateSirenCode = 14476512;
 unsigned long tamperActiveCode = 16557824;
@@ -28,11 +32,13 @@ void activateSiren() {
       unsigned long receivedValue = mySwitch.getReceivedValue();
       mySwitch.resetAvailable();
       if (receivedValue == deactivateSirenCode) {
+        Serial.println("DEACTIVE SIREN");
         sirenActivated = false;
         mySwitch.send(ackDeactivateCode, 24);
       }
       else if (receivedValue == activateSirenCode) {
-        Serial.println("ACTIVE ");
+        Serial.println("ACTIVE SIREN");
+        //delay(400);
         mySwitch.send(ackActivateCode, 24);
       }
     }
@@ -43,6 +49,9 @@ void activateTamper() {
   bool sirenActivated = true;
   bool ackReceived = false;
   unsigned long startMillis = millis();
+
+  digitalWrite(gatePin, LOW);
+  mySwitch.setRepeatTransmit(10);
   mySwitch.send(tamperActiveCode, 24);
   
   while (sirenActivated) {
@@ -54,16 +63,19 @@ void activateTamper() {
     if (mySwitch.available()) {
       unsigned long receivedValue = mySwitch.getReceivedValue();
       mySwitch.resetAvailable();
-      Serial.println(String(receivedValue));
       if (receivedValue == deactivateSirenCode) {
+        Serial.println("DEACTIVE TAMPER");
         sirenActivated = false;
+        mySwitch.setRepeatTransmit(20);
         mySwitch.send(ackDeactivateCode, 24);
       }
       if (receivedValue == ackControlUnitCode) {
+        Serial.println("ACK TAMPER");
         ackReceived = true;
       }
     }
   }
+  
 }
 
 
@@ -72,9 +84,10 @@ void setup() {
   mySwitch.enableReceive(0);
   mySwitch.setProtocol(1);
   mySwitch.enableTransmit(13);
+  mySwitch.setRepeatTransmit(20);
 
-  pinMode(gatePin, OUTPUT);
-  pinMode(txTransmitter, OUTPUT);
+  //pinMode(gatePin, OUTPUT);
+  //pinMode(txTransmitter, OUTPUT);
   pinMode(txTamper, OUTPUT);
   pinMode(rxTamper, INPUT);
   digitalWrite(txTamper, HIGH);
@@ -87,18 +100,22 @@ void loop() {
 
   int tamperValue = digitalRead(rxTamper);
   if (tamperEnabled) {
-    if (tamperValue == LOW) {
-      activateTamper();
-      tamperEnabled = false;
+    if(tamperValue == LOW) {
+      if(++tamperLowCount >= MAX_TAMPER_LOW) {
+        activateTamper();
+        tamperEnabled = false;
+        tamperLowCount = 0;
+      }
     }
+    else 
+      tamperValue = 0;
   }
-
+  
   if (mySwitch.available()) {
     unsigned long receivedValue = mySwitch.getReceivedValue();
     mySwitch.resetAvailable();
     if (receivedValue == activateSirenCode) {
       Serial.println("ACTIVE ");
-      //mySwitch.send(ackActivateCode, 24);
       activateSiren();
     }
     else if (receivedValue == deactivateSirenCode) {
