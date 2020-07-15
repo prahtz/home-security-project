@@ -151,21 +151,18 @@ void ConnHandler::clientThread(int clientSocket) {
             mCore.lock();
             core.sensorList(tcpComm);
             mCore.unlock();
-        } 
-        else if(message.length() < Message::DEACTIVATE_SENSOR.length()) {
-
         }
-        else if(message.substr(message.length() - Message::DEACTIVATE_SENSOR.length(), message.length()) == Message::DEACTIVATE_SENSOR) {
+        else if(message.length() >= Message::DEACTIVATE_SENSOR.length() && message.substr(message.length() - Message::DEACTIVATE_SENSOR.length(), message.length()) == Message::DEACTIVATE_SENSOR) {
             mCore.lock();
             core.deactivateSensor(tcpComm, message);
             mCore.unlock();
         }
-        else if(message.substr(message.length() - Message::ACTIVATE_SENSOR.length(), message.length()) == Message::ACTIVATE_SENSOR) {
+        else if(message.length() >= Message::ACTIVATE_SENSOR.length() && message.substr(message.length() - Message::ACTIVATE_SENSOR.length(), message.length()) == Message::ACTIVATE_SENSOR) {
             mCore.lock();
             core.activateSensor(tcpComm, message);
             mCore.unlock();
         }
-        else if(message.substr(message.length() - Message::REMOVE_SENSOR.length(), message.length()) == Message::REMOVE_SENSOR) {
+        else if(message.length() >= Message::REMOVE_SENSOR.length() && message.substr(message.length() - Message::REMOVE_SENSOR.length(), message.length()) == Message::REMOVE_SENSOR) {
             mCore.lock();
             core.removeSensor(tcpComm, message);
             mCore.unlock();

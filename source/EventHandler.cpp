@@ -25,58 +25,35 @@ void EventHandler::startListening()
 
         code codeReceived = receiver->popCodeFromBuffer();
         map<code, pair<Action, Sensor *> *>::iterator mapIterator = codeMap->find(codeReceived);
-        bool knownCode = codeMap->end() != mapIterator;
-        if (knownCode)
+        bool sensorCode = codeMap->end() != mapIterator;
+        if (sensorCode)
         {
             Action action = mapIterator->second->first;
             Sensor *sensor = mapIterator->second->second;
             switch (action)
             {
-            case OPEN:
-                onSensorOpen(sensor);
-                break;
-            case CLOSE:
-                onSensorClose(sensor);
+                case OPEN:
+                    onSensorOpen(sensor);
+                    break;
+                case CLOSE:
+                    onSensorClose(sensor);
             }
         }
-        else if(codeReceived == ackActivateCode) {
-            transmitter->mTransmit.lock();
-            if(transmitter->getTransmittingCode() == activateSirenCode) {
-                transmitter->isAckReceived(true);
-                transmitter->mTransmit.unlock();
-                transmitter->startTransmitting.notify_all();
-            }
-            else
-                transmitter->mTransmit.unlock();
-        }
-        else if(codeReceived == ackDeactivateCode) {
-            transmitter->mTransmit.lock();
-            if(transmitter->getTransmittingCode() == deactivateSirenCode) {
-                transmitter->isAckReceived(true);
-                transmitter->mTransmit.unlock();
-                transmitter->startTransmitting.notify_all();
-            }
-            else
-                transmitter->mTransmit.unlock();
-        }
-        else if(codeReceived == tamperActiveCode) {
-            transmitter->mTransmit.lock();
-            defensesActivated = true;
-            transmitter->addTransmittingCode(ackControlUnitCode, SEND_ACK);
-            transmitter->mTransmit.unlock();
-            transmitter->startTransmitting.notify_all();
-        }
-        else if(!isATransmittingCode(codeReceived)) 
-        {
-            //cout<<"NO " << codeReceived<<endl;
-            cout << "EventHandler - codeReceived: " << codeReceived << endl;
-            cout << "EventHandler - registerCode?: " << registerCode << endl;
-            if (registerCode)
+        else {
+            switch(codeReceived)
             {
-                newCode = codeReceived;
-                cout << "EventHandler - newCode: " << newCode << endl;
-                codeArrived = true;
-                statical::sharedCondition.notify_all();
+                case ackActivateCode:
+                    onAckActivateCode();
+                    break;
+                case ackDeactivateCode:
+                    onAckDeactivateCode();
+                    break;
+                case tamperActiveCode:
+                    onTamperActiveCode();
+                    break;
+                default:
+                    onUnknownCode(codeReceived);
+                    
             }
         }
     }
@@ -100,6 +77,48 @@ void EventHandler::onSensorClose(Sensor *sensor)
     sensor->setSensorState(CLOSED);
     updateKnownFile();
     mSensorList.unlock();
+}
+
+void EventHandler::onAckActivateCode() {
+    transmitter->mTransmit.lock();
+    if(transmitter->getTransmittingCode() == activateSirenCode) {
+        transmitter->isAckReceived(true);
+        transmitter->mTransmit.unlock();
+        transmitter->startTransmitting.notify_all();
+    }
+    else
+        transmitter->mTransmit.unlock();
+}
+
+void EventHandler::onAckDeactivateCode() {
+    transmitter->mTransmit.lock();
+    if(transmitter->getTransmittingCode() == deactivateSirenCode) {
+        transmitter->isAckReceived(true);
+        transmitter->mTransmit.unlock();
+        transmitter->startTransmitting.notify_all();
+    }
+    else
+        transmitter->mTransmit.unlock();
+}
+
+void EventHandler::onTamperActiveCode() {
+    transmitter->mTransmit.lock();
+    defensesActivated = true;
+    transmitter->addTransmittingCode(ackControlUnitCode, SEND_ACK);
+    transmitter->mTransmit.unlock();
+    transmitter->startTransmitting.notify_all();
+}
+
+void EventHandler::onUnknownCode(code codeReceived) {
+    cout << "EventHandler - codeReceived: " << codeReceived << endl;
+    cout << "EventHandler - registerCode?: " << registerCode << endl;
+    if (registerCode)
+    {
+        newCode = codeReceived;
+        cout << "EventHandler - newCode: " << newCode << endl;
+        codeArrived = true;
+        statical::sharedCondition.notify_all();
+    }
 }
 
 bool EventHandler::isATransmittingCode(code codeReceived) {

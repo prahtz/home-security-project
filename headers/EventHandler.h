@@ -19,6 +19,11 @@ class EventHandler {
   
         void onSensorOpen(Sensor* sensor);
         void onSensorClose(Sensor* sensor);
+        void onAckActivateCode();
+        void onAckDeactivateCode();
+        void onTamperActiveCode();
+        void onUnknownCode(code codeReceived);
+
         bool isATransmittingCode(code codeReceived);
         void activateDefenses();
         
