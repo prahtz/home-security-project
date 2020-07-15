@@ -16,4 +16,15 @@ class UnexpectedMessageException : public RegisterNewSensorException{
     UnexpectedMessageException(const char* what) : RegisterNewSensorException(what) {}
 };
 
+class TimeOutException : public RegisterNewSensorException{
+    public:
+    TimeOutException(const char* what) : RegisterNewSensorException(what) {}
+};
+
+
+class AbortException : public RegisterNewSensorException{
+    public:
+    AbortException(const char* what) : RegisterNewSensorException(what) {}
+};
+
 

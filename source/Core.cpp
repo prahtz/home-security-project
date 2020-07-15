@@ -102,131 +102,28 @@ void Core::registerNewDoorSensor(TCPComm &tcpComm)
     DoorSensor *ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
     ds->setSensorState(OPENED);
-
-
-    //cambia var
-
-    eventHandler.registerCode = true;
-
-    unique_lock<mutex> registerLock(statical::mSharedCondition);
-    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-        return (bool)eventHandler.codeArrived || tcpComm.isAvailable();
-    });
-    
-    if (tcpComm.isAvailable())
+    try
     {
-        string message = tcpComm.getMessage();
-        cout << "Abort...";
+        code closeCode = registerCloseCode(tcpComm, ds);
+        registerOpenCode(tcpComm, ds, closeCode);
+        registerSensorName(tcpComm, ds);
+    }
+    catch (AbortException &e)
+    {
+        cout << e.what() << endl;
+        tcpComm.flush();
         eventHandler.registerCode = false;
         delete ds;
         return;
     }
-    if (!notTimedOut)
+    catch (TimeOutException &e)
     {
-        cout << "Timed out...";
+        cout << e.what() << endl;
         tcpComm.flush();
         tcpComm.sendMessage(message::TIME_OUT);
         eventHandler.registerCode = false;
         delete ds;
         return;
-    }
-
-    eventHandler.codeArrived = false;
-    code closeCode = eventHandler.newCode;
-    ds->setCloseCode(closeCode);
-    cout << "Core - closeCode: " << closeCode << endl;
-
-    tcpComm.sendMessage(message::NEXT_CODE);
-
-    bool go = true;
-    while (go)
-    {
-        notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-            return ((bool)eventHandler.codeArrived) || tcpComm.isAvailable();
-        });
-
-        if (tcpComm.isAvailable())
-        {
-            tcpComm.getMessage();
-            cout << "Abort...";
-            eventHandler.registerCode = false;
-            delete ds;
-            return;
-        }
-        if (!notTimedOut)
-        {
-            cout << "Timed out...";
-            tcpComm.flush();
-            tcpComm.sendMessage(message::TIME_OUT);
-            eventHandler.registerCode = false;
-            delete ds;
-            return;
-        }
-        eventHandler.codeArrived = false;
-        code openCode = eventHandler.newCode;
-        if (openCode != closeCode)
-        {
-            ds->setOpenCode(openCode);
-            tcpComm.sendMessage(message::STRING);
-            cout << "Core - openCode: " << openCode << endl;
-            go = false;
-        }
-    }
-    eventHandler.registerCode = false;
-
-
-    notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-        return tcpComm.isAvailable();
-    });
-    
-    try
-    {
-        if (tcpComm.isAvailable())
-        {
-            string message = tcpComm.getMessage();
-            cout << message << endl;
-            if(message == message::STRING) {
-                tcpComm.sendMessage(message::ACK);
-                statical::sharedCondition.wait(registerLock, [this, &tcpComm] {
-                    return tcpComm.isAvailable();
-                });
-                string sensorName = tcpComm.getMessage();
-                cout << "SENSOR NAME: " << sensorName << endl;
-                if (sensorName != message::FAIL && sensorName != message::ABORT && sensorName != message::STRING)
-                {
-                    ds->setSensorName(sensorName);
-                    ds->isEnabled(true);
-                    eventHandler.mSensorList.lock();
-                    addSensorToList(ds);
-                    eventHandler.mSensorList.unlock();
-                    eventHandler.mFile.lock();
-                    ofstream out(KNOWN_PATH, ios::app);
-                    codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
-                    codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
-                    ds->writeToFile(out);
-                    out.close();
-                    eventHandler.mFile.unlock();
-                    cout << "Core - sensorName" << endl;
-                }
-                else 
-                    throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato");
-            }
-            else if(message == message::FAIL || message == message::ABORT) {
-                cout << "Abort..." <<endl;
-                delete ds;
-                return;
-            }
-            else 
-                throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato");       
-        }
-        else 
-        {
-            cout << "Timed out...";
-            tcpComm.sendMessage(message::TIME_OUT);
-            eventHandler.registerCode = false;
-            delete ds;
-            return;
-        }
     }
     catch (RegisterNewSensorException &e)
     {
@@ -237,11 +134,112 @@ void Core::registerNewDoorSensor(TCPComm &tcpComm)
     }
 
     tcpComm.sendMessage(message::REGISTER_SUCCESS);
-    cout << "Core - FINE" << endl;
 }
 
+code Core::registerCloseCode(TCPComm &tcpComm, DoorSensor *ds)
+{
+    eventHandler.registerCode = true;
+    unique_lock<mutex> registerLock(statical::mSharedCondition);
+    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
+        return (bool)eventHandler.codeArrived || tcpComm.isAvailable();
+    });
 
+    if (tcpComm.isAvailable())
+    {
+        
+        if (tcpComm.getMessage() == message::ABORT)
+            throw AbortException("Register sensor abort, first step.");
+        throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, first step.");
+    }
+    if (!notTimedOut)
+        throw TimeOutException("Register sensor timed out, first step");
 
+    eventHandler.codeArrived = false;
+    code closeCode = eventHandler.newCode;
+    ds->setCloseCode(closeCode);
+
+    tcpComm.sendMessage(message::NEXT_CODE);
+    return closeCode;
+}
+
+code Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds, code closeCode)
+{
+    bool go = true;
+    code openCode;
+    unique_lock<mutex> registerLock(statical::mSharedCondition);
+    while (go)
+    {
+        bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
+            return ((bool)eventHandler.codeArrived) || tcpComm.isAvailable();
+        });
+
+        if (tcpComm.isAvailable()) {
+            string m = tcpComm.getMessage();
+            if (m == message::ABORT)
+                throw AbortException("Register sensor abort, second step.");
+            throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, second step");
+        }
+        if (!notTimedOut)
+            throw TimeOutException("Register sensor timed out, second step");
+
+        eventHandler.codeArrived = false;
+        openCode = eventHandler.newCode;
+        if (openCode != closeCode)
+        {
+            ds->setOpenCode(openCode);
+            tcpComm.sendMessage(message::STRING);
+            go = false;
+        }
+    }
+    eventHandler.registerCode = false;
+    return openCode;
+}
+string Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds)
+{
+    unique_lock<mutex> registerLock(statical::mSharedCondition);
+    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
+        return tcpComm.isAvailable();
+    });
+
+    if (tcpComm.isAvailable())
+    {
+        string message = tcpComm.getMessage();
+        if (message == message::STRING)
+        {
+            tcpComm.sendMessage(message::ACK);
+            statical::sharedCondition.wait(registerLock, [this, &tcpComm] {
+                return tcpComm.isAvailable();
+            });
+            string sensorName = tcpComm.getMessage();
+            if (sensorName != message::FAIL && sensorName != message::ABORT && sensorName != message::STRING)
+            {
+                ds->setSensorName(sensorName);
+                ds->isEnabled(true);
+                eventHandler.mSensorList.lock();
+                addSensorToList(ds);
+                eventHandler.mSensorList.unlock();
+                eventHandler.mFile.lock();
+                ofstream out(KNOWN_PATH, ios::app);
+                codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
+                codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
+                ds->writeToFile(out);
+                out.close();
+                eventHandler.mFile.unlock();
+                return sensorName;
+            }
+            else
+                throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, third step, expected sensor name");
+        }
+        else if (message == message::ABORT)
+        {
+            throw AbortException("Register sensor abort, third step.");
+        }
+        else
+            throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, third step, expected STRING");
+    }
+    else
+        throw TimeOutException("Register sensor timed out, third step");
+}
 
 void Core::activateAlarm(TCPComm &tcpComm)
 {

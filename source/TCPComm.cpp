@@ -41,6 +41,7 @@ void TCPComm::startReceive() {
                 messageBuffer.push_front(message.substr(0, message.length() - message::EOM.length()));
                 messageAvailable = true;
                 mMessageBuffer.unlock();
+                
                 statical::sharedCondition.notify_all();
                
                 if(message.length() != pos + message::EOM.length()) 
@@ -66,7 +67,7 @@ void TCPComm::sendMessage(string message)
 
 string TCPComm::getMessage() {
     mMessageBuffer.lock();
-    if(!messageAvailable) { return "";}
+    if(!messageAvailable) { return message::FAIL;}
     string message = messageBuffer.back();
     messageBuffer.pop_back();
     messageAvailable = !messageBuffer.empty();

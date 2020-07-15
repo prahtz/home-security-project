@@ -28,10 +28,11 @@ class Core{
         list<string> messageBuffer;
 
         void setupKnownSensors();
-        void startClientServerComunication();
         int getNewSensorID();
-        bool isFutureReady(shared_future<string> fut);
-        
+
+        code registerCloseCode(TCPComm &tcpComm, DoorSensor *ds);
+        code registerOpenCode(TCPComm &tcpComm, DoorSensor *ds, code closeCode);
+        string registerSensorName(TCPComm &tcpComm, DoorSensor *ds);
 
     public:
         Core(); 
