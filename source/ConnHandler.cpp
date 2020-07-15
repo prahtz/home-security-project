@@ -135,39 +135,39 @@ void ConnHandler::clientThread(int clientSocket) {
         clientLock.unlock();
         cout<<"YES" <<endl;
         message = tcpComm.getMessage();
-        if(message == Message::ACTIVATE_ALARM) {
+        if(message == message::ACTIVATE_ALARM) {
             mCore.lock();
             core.activateAlarm(tcpComm);
             mCore.unlock();
-        }else if (message == Message::DEACTIVATE_ALARM){
+        }else if (message == message::DEACTIVATE_ALARM){
             mCore.lock();
             core.deactivateAlarm(tcpComm);
             mCore.unlock();
-        }else if (message == Message::REGISTER_DOORSENSOR){
+        }else if (message == message::REGISTER_DOORSENSOR){
             mCore.lock();
             core.registerNewDoorSensor(tcpComm);
             mCore.unlock();
-        }else if (message == Message::SENSOR_LIST){
+        }else if (message == message::SENSOR_LIST){
             mCore.lock();
             core.sensorList(tcpComm);
             mCore.unlock();
         }
-        else if(message.length() >= Message::DEACTIVATE_SENSOR.length() && message.substr(message.length() - Message::DEACTIVATE_SENSOR.length(), message.length()) == Message::DEACTIVATE_SENSOR) {
+        else if(message.length() >= message::DEACTIVATE_SENSOR.length() && message.substr(message.length() - message::DEACTIVATE_SENSOR.length(), message.length()) == message::DEACTIVATE_SENSOR) {
             mCore.lock();
             core.deactivateSensor(tcpComm, message);
             mCore.unlock();
         }
-        else if(message.length() >= Message::ACTIVATE_SENSOR.length() && message.substr(message.length() - Message::ACTIVATE_SENSOR.length(), message.length()) == Message::ACTIVATE_SENSOR) {
+        else if(message.length() >= message::ACTIVATE_SENSOR.length() && message.substr(message.length() - message::ACTIVATE_SENSOR.length(), message.length()) == message::ACTIVATE_SENSOR) {
             mCore.lock();
             core.activateSensor(tcpComm, message);
             mCore.unlock();
         }
-        else if(message.length() >= Message::REMOVE_SENSOR.length() && message.substr(message.length() - Message::REMOVE_SENSOR.length(), message.length()) == Message::REMOVE_SENSOR) {
+        else if(message.length() >= message::REMOVE_SENSOR.length() && message.substr(message.length() - message::REMOVE_SENSOR.length(), message.length()) == message::REMOVE_SENSOR) {
             mCore.lock();
             core.removeSensor(tcpComm, message);
             mCore.unlock();
         }
-    }while(message != Message::FAIL);
+    }while(message != message::FAIL);
     cout<<"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"<<endl;
     tcpThread.join();
     closesocket(clientSocket);

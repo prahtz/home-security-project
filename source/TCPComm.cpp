@@ -25,7 +25,7 @@ void TCPComm::startReceive() {
         if (r == 0 || r == SOCKET_ERROR)
         {
             mMessageBuffer.lock();
-            messageBuffer.push_front(Message::FAIL);
+            messageBuffer.push_front(message::FAIL);
             mMessageBuffer.unlock();
             delete buf;
             messageAvailable = true;
@@ -34,20 +34,20 @@ void TCPComm::startReceive() {
         }
         else {
             message = message + ((string)buf).substr(0, r);
-            unsigned int pos = message.find(Message::EOM);
+            unsigned int pos = message.find(message::EOM);
             while (pos != string::npos)
             {
                 mMessageBuffer.lock();
-                messageBuffer.push_front(message.substr(0, message.length() - Message::EOM.length()));
+                messageBuffer.push_front(message.substr(0, message.length() - message::EOM.length()));
                 messageAvailable = true;
                 mMessageBuffer.unlock();
                 statical::sharedCondition.notify_all();
                
-                if(message.length() != pos + Message::EOM.length()) 
-                    message = message.substr(pos + Message::EOM.length(), message.length());
+                if(message.length() != pos + message::EOM.length()) 
+                    message = message.substr(pos + message::EOM.length(), message.length());
                 else
                     message = "";
-                pos = message.find(Message::EOM);
+                pos = message.find(message::EOM);
             }   
         }
     }
@@ -60,8 +60,8 @@ bool TCPComm::isAvailable() {
 void TCPComm::sendMessage(string message)
 {
     char *buf = new char[BUFSIZ];
-    fillBuffer(buf, message + Message::EOM);
-    send(clientSocket, buf, message.length() + Message::EOM.length(), 0);
+    fillBuffer(buf, message + message::EOM);
+    send(clientSocket, buf, message.length() + message::EOM.length(), 0);
 }
 
 string TCPComm::getMessage() {

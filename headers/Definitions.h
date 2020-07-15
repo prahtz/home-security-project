@@ -4,7 +4,7 @@
 #include <mutex>
 
 typedef unsigned long code;
-extern std::string SEPARATOR;
+static const std::string SEPARATOR;
 static const code activateSirenCode = 14152368;
 static const code deactivateSirenCode = 14476512;
 static const code tamperActiveCode = 16557824;
@@ -16,6 +16,6 @@ static const code ackControlUnitCode = 12343212;
 static const code ackEnableTamperCode = 16752004;
 
 namespace statical {
-    extern std::condition_variable sharedCondition;
-    extern std::mutex mSharedCondition;
+    static std::condition_variable sharedCondition;
+    static std::mutex mSharedCondition;
 }

@@ -19,7 +19,6 @@ void EventHandler::startListening()
 {
     while (true)
     {
-
         unique_lock<mutex> receiverLock(receiver->mBuff);
         receiver->codeAvailable.wait(receiverLock, [this] { return !receiver->isBufferEmpty(); });
 
