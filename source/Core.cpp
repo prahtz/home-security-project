@@ -1,6 +1,6 @@
 #include "Core.h"
 
-Core::Core() : receiver(PIN), eventHandler(&receiver, &transmitter, &knownSensorList, &codeMap)
+Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &knownSensorList, &codeMap)
 {
     setupKnownSensors();
     receiverThread = thread(&Receiver::startReceiving, &receiver);

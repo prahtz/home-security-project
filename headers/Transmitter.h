@@ -20,7 +20,6 @@ using namespace std;
 class Transmitter {
     private:
         RCSwitch rc;
-        int pin;
         int bitLength;
         unsigned long transmitDelay;
         atomic<bool> stopTransmitting, ackReceived;

@@ -1,4 +1,0 @@
-enum AlarmType {
-    COMPLETE,
-    HOME
-};

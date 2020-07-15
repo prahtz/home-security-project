@@ -1,15 +1,14 @@
 #include "Receiver.h"
 
-Receiver::Receiver(int pin)
+Receiver::Receiver()
 {
-    this->pin = pin;
     stopReceive = false;
 }
 
 void Receiver::startReceiving()
 {
     wiringPiSetup();
-    rc.enableReceive(pin);
+    rc.enableReceive(RECEIVER_PIN);
     int buffSize = 100;
     stopReceive = false;
     while (!stopReceive)

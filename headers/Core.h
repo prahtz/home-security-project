@@ -7,18 +7,12 @@
 #include <stdlib.h>
 #include <sstream>
 #include <map>
-#include "AlarmType.h"
 #include "EventHandler.h"
 #include "SensorTypes.h"
 #include "Action.h"
 #include "MessageType.h"
 #include "Exceptions.h"
 #include "TCPComm.h"
-
-
-#define PIN 25
-#define KNOWN_PATH "./csv/known.csv"
-
 
 using namespace std;
 

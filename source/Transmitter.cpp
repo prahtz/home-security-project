@@ -3,10 +3,9 @@
 Transmitter::Transmitter()
 {
     wiringPiSetup();
-    pin = 24;
     bitLength = 24;
     transmitDelay = 1000;
-    rc.enableTransmit(pin);
+    rc.enableTransmit(TRANSMITTER_PIN);
     transmittingCode = 0;
     transmitMode = WAIT_FOR_ACK;
     ackReceived = false;

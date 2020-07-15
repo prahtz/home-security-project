@@ -3,6 +3,10 @@
 #include <condition_variable>
 #include <mutex>
 
+#define RECEIVER_PIN 25
+#define TRANSMITTER_PIN 24
+#define KNOWN_PATH "./csv/known.csv"
+
 typedef unsigned long code;
 static const std::string SEPARATOR;
 static const code activateSirenCode = 14152368;
@@ -16,6 +20,6 @@ static const code ackControlUnitCode = 12343212;
 static const code ackEnableTamperCode = 16752004;
 
 namespace statical {
-    static std::condition_variable sharedCondition;
-    static std::mutex mSharedCondition;
+    extern std::condition_variable sharedCondition;
+    extern std::mutex mSharedCondition;
 }
