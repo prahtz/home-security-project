@@ -104,8 +104,8 @@ void Core::registerNewDoorSensor(TCPComm &tcpComm)
     ds->setSensorState(OPENED);
     try
     {
-        code closeCode = registerCloseCode(tcpComm, ds);
-        registerOpenCode(tcpComm, ds, closeCode);
+        registerCloseCode(tcpComm, ds);
+        registerOpenCode(tcpComm, ds);
         registerSensorName(tcpComm, ds);
     }
     catch (AbortException &e)
@@ -136,7 +136,7 @@ void Core::registerNewDoorSensor(TCPComm &tcpComm)
     tcpComm.sendMessage(message::REGISTER_SUCCESS);
 }
 
-code Core::registerCloseCode(TCPComm &tcpComm, DoorSensor *ds)
+void Core::registerCloseCode(TCPComm &tcpComm, DoorSensor *ds)
 {
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(statical::mSharedCondition);
@@ -159,10 +159,9 @@ code Core::registerCloseCode(TCPComm &tcpComm, DoorSensor *ds)
     ds->setCloseCode(closeCode);
 
     tcpComm.sendMessage(message::NEXT_CODE);
-    return closeCode;
 }
 
-code Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds, code closeCode)
+void Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds)
 {
     bool go = true;
     code openCode;
@@ -184,7 +183,7 @@ code Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds, code closeCode)
 
         eventHandler.codeArrived = false;
         openCode = eventHandler.newCode;
-        if (openCode != closeCode)
+        if (openCode != ds->getCloseCode())
         {
             ds->setOpenCode(openCode);
             tcpComm.sendMessage(message::STRING);
@@ -192,9 +191,9 @@ code Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds, code closeCode)
         }
     }
     eventHandler.registerCode = false;
-    return openCode;
 }
-string Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds)
+
+void Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds)
 {
     unique_lock<mutex> registerLock(statical::mSharedCondition);
     bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
@@ -214,6 +213,7 @@ string Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds)
             if (sensorName != message::FAIL && sensorName != message::ABORT && sensorName != message::STRING)
             {
                 ds->setSensorName(sensorName);
+                ds->setBatteryLowCode(ds->getOpenCode() - BATTERY_LOW_SHIFT);
                 ds->isEnabled(true);
                 eventHandler.mSensorList.lock();
                 addSensorToList(ds);
@@ -222,10 +222,10 @@ string Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds)
                 ofstream out(KNOWN_PATH, ios::app);
                 codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
                 codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
+                codeMap[ds->getBatteryLowCode()] = new pair<Action, Sensor*>(BATTERY_LOW, ds);
                 ds->writeToFile(out);
                 out.close();
                 eventHandler.mFile.unlock();
-                return sensorName;
             }
             else
                 throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, third step, expected sensor name");

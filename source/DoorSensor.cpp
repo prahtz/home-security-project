@@ -28,12 +28,19 @@ void DoorSensor::setCloseCode(code closeCode) {
 void DoorSensor::setSensorName(string sensorName) {
     this->sensorName = sensorName;
 }
+void DoorSensor::setBatteryLowCode(code batteryLowCode) {
+    this->batteryLowCode = batteryLowCode;
+}
 
 code DoorSensor::getOpenCode() {
     return openCode;
 }
 code DoorSensor::getCloseCode() {
     return closeCode;
+}
+
+code DoorSensor::getBatteryLowCode() {
+    return batteryLowCode;
 }
 
 string DoorSensor::getSensorName() {

@@ -36,6 +36,10 @@ void EventHandler::startListening()
                     break;
                 case CLOSE:
                     onSensorClose(sensor);
+                    break;
+                case BATTERY_LOW:
+                    onSensorBatteryLow(sensor);
+                
             }
         }
         else {
@@ -74,6 +78,14 @@ void EventHandler::onSensorClose(Sensor *sensor)
 {
     mSensorList.lock();
     sensor->setSensorState(CLOSED);
+    updateKnownFile();
+    mSensorList.unlock();
+}
+
+void EventHandler::onSensorBatteryLow(Sensor *sensor)
+{
+    mSensorList.lock();
+    sensor->isCharged(false);
     updateKnownFile();
     mSensorList.unlock();
 }

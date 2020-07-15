@@ -19,6 +19,7 @@ class EventHandler {
   
         void onSensorOpen(Sensor* sensor);
         void onSensorClose(Sensor* sensor);
+        void onSensorBatteryLow(Sensor* sensor);
         void onAckActivateCode();
         void onAckDeactivateCode();
         void onTamperActiveCode();

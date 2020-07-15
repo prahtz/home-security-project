@@ -4,6 +4,7 @@ Sensor::Sensor(int sensorID, State sensorState, bool enabled) {
     this->sensorID = sensorID;
     this->sensorState = sensorState;
     this->enabled = enabled;
+    this->charged = true;
 }
 
 int Sensor::getSensorID() {
@@ -20,8 +21,16 @@ void Sensor::setSensorState(State state) {
     this->sensorState = state;
 }
 
+void Sensor::isCharged(bool charged) {
+    this->charged = charged;
+}
+
 void Sensor::isEnabled(bool enabled) {
     this->enabled = enabled;
+}
+
+bool Sensor::isCharged() {
+    return charged;
 }
 
 bool Sensor::isEnabled() {
@@ -33,7 +42,7 @@ bool Sensor::isSensorReady() {
 }
 
 void Sensor::writeToFile(ofstream &out) {
-    out << sensorID << ";" << sensorState << ";" << enabled << ";";
+    out << sensorID << SEPARATOR << sensorState << SEPARATOR << enabled << SEPARATOR;
 }
 
 string Sensor::getSensorInfo() {

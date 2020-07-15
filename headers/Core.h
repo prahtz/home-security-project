@@ -30,9 +30,9 @@ class Core{
         void setupKnownSensors();
         int getNewSensorID();
 
-        code registerCloseCode(TCPComm &tcpComm, DoorSensor *ds);
-        code registerOpenCode(TCPComm &tcpComm, DoorSensor *ds, code closeCode);
-        string registerSensorName(TCPComm &tcpComm, DoorSensor *ds);
+        void registerCloseCode(TCPComm &tcpComm, DoorSensor *ds);
+        void registerOpenCode(TCPComm &tcpComm, DoorSensor *ds);
+        void registerSensorName(TCPComm &tcpComm, DoorSensor *ds);
 
     public:
         Core(); 

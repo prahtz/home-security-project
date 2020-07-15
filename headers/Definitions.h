@@ -8,6 +8,7 @@
 #define KNOWN_PATH "./csv/known.csv"
 
 typedef unsigned long code;
+static const int BATTERY_LOW_SHIFT = 4;
 static const std::string SEPARATOR = ";";
 static const code activateSirenCode = 14152368;
 static const code deactivateSirenCode = 14476512;
