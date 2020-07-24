@@ -86,7 +86,7 @@ void setup() {
   mySwitch.enableTransmit(13);
   mySwitch.setRepeatTransmit(20);
 
-  //pinMode(gatePin, OUTPUT);
+  pinMode(gatePin, OUTPUT);
   //pinMode(txTransmitter, OUTPUT);
   pinMode(txTamper, OUTPUT);
   pinMode(rxTamper, INPUT);
@@ -98,6 +98,7 @@ void loop() {
   digitalWrite(gatePin, HIGH);
   digitalWrite(txTamper, HIGH);
 
+  /*
   int tamperValue = digitalRead(rxTamper);
   if (tamperEnabled) {
     if(tamperValue == LOW) {
@@ -109,7 +110,7 @@ void loop() {
     }
     else 
       tamperValue = 0;
-  }
+  }*/
   
   if (mySwitch.available()) {
     unsigned long receivedValue = mySwitch.getReceivedValue();
