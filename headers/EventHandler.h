@@ -24,8 +24,7 @@ class EventHandler {
         void onAckDeactivateCode();
         void onTamperActiveCode();
         void onUnknownCode(code codeReceived);
-
-        bool isATransmittingCode(code codeReceived);
+        bool isTransmittingCode(code codeReceived);
         void activateDefenses();
         
     public:

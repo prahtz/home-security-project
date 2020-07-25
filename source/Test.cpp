@@ -46,6 +46,6 @@ int main() {
 		std::cout << e.what() << std::endl;
 	}
 
-    //ConnHandler ch;
+    ConnHandler ch;
     return 0;
 }

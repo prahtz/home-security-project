@@ -55,7 +55,8 @@ void EventHandler::startListening()
                     onTamperActiveCode();
                     break;
                 default:
-                    onUnknownCode(codeReceived);
+                    if(!isTransmittingCode(codeReceived))
+                        onUnknownCode(codeReceived);
                     
             }
         }
@@ -132,8 +133,9 @@ void EventHandler::onUnknownCode(code codeReceived) {
     }
 }
 
-bool EventHandler::isATransmittingCode(code codeReceived) {
-    return codeReceived == activateSirenCode || codeReceived == deactivateSirenCode || codeReceived == ackControlUnitCode;
+bool EventHandler::isTransmittingCode(code codeReceived) {
+    return codeReceived == activateSirenCode || codeReceived == deactivateSirenCode || codeReceived == ackControlUnitCode
+    || codeReceived == enableTamperCode;
 }
 
 void EventHandler::updateKnownFile()
