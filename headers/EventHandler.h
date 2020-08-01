@@ -2,6 +2,7 @@
 #include "Transmitter.h"
 #include "DoorSensor.h"
 #include "Action.h"
+#include "FirebaseMessagesHandler.h"
 #include <map>
 #include <iostream>
 #include <algorithm>
@@ -14,6 +15,7 @@ class EventHandler {
     private:
         Receiver* receiver;
         Transmitter* transmitter;
+        FirebaseMessagesHandler* firebaseMessagesHandler;
         list<Sensor*>* knownSensorList;
         map<code, pair<Action, Sensor*>*>* codeMap;
   
@@ -34,7 +36,7 @@ class EventHandler {
         atomic<code> newCode;
 
         EventHandler(){}
-        EventHandler(Receiver* receiver, Transmitter* transmitter, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap);
+        EventHandler(Receiver* receiver, Transmitter* transmitter, FirebaseMessagesHandler* firebaseMessagesHandler, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap);
 
         void updateKnownFile();
         void startListening();

@@ -11,11 +11,6 @@ using namespace std;
 #define TRANSPORT SOCK_STREAM
 #define PROTOCOL IPPROTO_TCP
 #define DNS_DOMAIN "prah.homepc.it"
-#ifdef _WIN32
-    #define PORT "33471"
-#else
-    #define PORT "33470"
-#endif
 
 class ConnHandler {
     private:

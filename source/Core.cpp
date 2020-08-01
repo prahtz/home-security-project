@@ -1,10 +1,11 @@
 #include "Core.h"
 
-Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &knownSensorList, &codeMap)
+Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &codeMap)
 {
     setupKnownSensors();
     receiverThread = thread(&Receiver::startReceiving, &receiver);
     transmitterThread = thread(&Transmitter::startTransmittingProtocol, &transmitter);
+    firebaseMessagesHandlerThread = thread(&FirebaseMessagesHandler::startService, &firebaseMessagesHandler);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
 };
 

@@ -9,11 +9,11 @@ class RCSwitch {
         code arrayCode[100];
     public:
         RCSwitch() {
-            arrayCode[0] = 1;
-            arrayCode[1] = 2;
-            arrayCode[2] = ackActivateCode;
-            arrayCode[3] = 88;
-            arrayCode[4] = ackDeactivateCode;
+            arrayCode[0] = 4;
+            arrayCode[1] = 3;
+            arrayCode[2] = 3;
+            arrayCode[3] = 3;
+            arrayCode[4] = 3;
         };
         void enableReceive(int PIN){}
         bool available(){return true;}
@@ -21,7 +21,7 @@ class RCSwitch {
         void resetAvailable() {}
         void enableTransmit(int PIN){}
         void send(unsigned long code, unsigned int bitLength) {
-            std::cout<< code << std::endl;
+            std::cout<< "SEND: " << code << std::endl;
         }
         void setRepeatTransmit(int a) {
 

@@ -23,4 +23,7 @@ static const code ackEnableTamperCode = 16752004;
 namespace statical {
     extern std::condition_variable sharedCondition;
     extern std::mutex mSharedCondition;
+
+    extern std::condition_variable newFirebaseNotification;
+    extern std::mutex mNewFirebaseNotification;
 }

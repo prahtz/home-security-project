@@ -1,6 +1,6 @@
 # This is a comment
-prefix=/usr/local
-exec_prefix=/usr/local
+prefix=C:/Program Files (x86)/curlpp
+exec_prefix=C:/Program Files (x86)/curlpp
 includedir=include
 
 Name: curlpp

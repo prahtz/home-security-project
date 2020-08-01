@@ -1,7 +1,9 @@
 #ifdef _WIN32
     #include <winsock2.h>
     #define LAN_IP "192.168.1.50"
+    #define PORT "33471"
     #include <ws2tcpip.h>
+    
 #else
     #include <sys/types.h> 
     #include <sys/socket.h>
@@ -13,6 +15,7 @@
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
     #define LAN_IP "192.168.1.48"
+    #define PORT "33470"
 #endif
 
 #include <string>

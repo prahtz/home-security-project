@@ -1,9 +1,10 @@
 #include "EventHandler.h"
 
-EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, list<Sensor *> *knownSensorList, map<code, pair<Action, Sensor *> *> *codeMap)
+EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler, list<Sensor *> *knownSensorList, map<code, pair<Action, Sensor *> *> *codeMap)
 {
     this->receiver = receiver;
     this->transmitter = transmitter;
+    this->firebaseMessagesHandler = firebaseMessagesHandler;
     this->knownSensorList = knownSensorList;
     this->codeMap = codeMap;
 
@@ -67,7 +68,7 @@ void EventHandler::startListening()
 void EventHandler::onSensorOpen(Sensor *sensor)
 {
     mSensorList.lock();
-    if (alarmActivated && sensor->isEnabled())
+    if (alarmActivated && sensor->isEnabled() && !defensesActivated)
         activateDefenses();
     sensor->setSensorState(OPENED);
     updateKnownFile();
@@ -159,4 +160,11 @@ void EventHandler::activateDefenses()
     }
     else
         transmitter->mTransmit.unlock();
+
+    FirebaseNotification notification;
+    notification.setTitle("ALLARME ATTIVO");
+    notification.setBody("Intrusione rilevata!");
+    firebaseMessagesHandler->addNotification(notification);
+    firebaseMessagesHandler->addNotification(notification);
+    statical::newFirebaseNotification.notify_all();
 }

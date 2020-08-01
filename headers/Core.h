@@ -23,8 +23,9 @@ class Core{
         map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
         Transmitter transmitter;
+        FirebaseMessagesHandler firebaseMessagesHandler;
         EventHandler eventHandler;
-        thread receiverThread, eventHandlerThread, transmitterThread;
+        thread receiverThread, eventHandlerThread, transmitterThread, firebaseMessagesHandlerThread;
         list<string> messageBuffer;
 
         void setupKnownSensors();
