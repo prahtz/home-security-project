@@ -165,6 +165,5 @@ void EventHandler::activateDefenses()
     notification.setTitle("ALLARME ATTIVO");
     notification.setBody("Intrusione rilevata!");
     firebaseMessagesHandler->addNotification(notification);
-    firebaseMessagesHandler->addNotification(notification);
     statical::newFirebaseNotification.notify_all();
 }
