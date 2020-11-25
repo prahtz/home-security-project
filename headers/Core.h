@@ -10,9 +10,9 @@
 #include "EventHandler.h"
 #include "SensorTypes.h"
 #include "Action.h"
-#include "MessageType.h"
 #include "Exceptions.h"
 #include "TCPComm.h"
+#include "FirebaseOperation.h"
 
 using namespace std;
 
@@ -20,6 +20,7 @@ class Core{
     private:
         atomic<bool> abortProcedure;
         list<Sensor*> knownSensorList;
+        list<string> tokenList;
         map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
         Transmitter transmitter;
@@ -29,6 +30,8 @@ class Core{
         list<string> messageBuffer;
 
         void setupKnownSensors();
+        void setupTokenList();
+        void updateTokenList();
         int getNewSensorID();
 
         void registerCloseCode(TCPComm &tcpComm, DoorSensor *ds);
@@ -48,4 +51,5 @@ class Core{
         bool isAlarmReady();
         void registerNewDoorSensor(TCPComm &tcpComm);
         void writeSensorToFile(Sensor* s);
+        void handleFirebaseToken(string token);
 };

@@ -1,6 +1,5 @@
 /.vscode/
 Test.exe
 Test.out
-README.md
 makefile
-/csv/known.csv
+/csv/

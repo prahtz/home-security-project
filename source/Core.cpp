@@ -3,6 +3,7 @@
 Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &codeMap)
 {
     setupKnownSensors();
+    setupTokenList();
     receiverThread = thread(&Receiver::startReceiving, &receiver);
     transmitterThread = thread(&Transmitter::startTransmittingProtocol, &transmitter);
     firebaseMessagesHandlerThread = thread(&FirebaseMessagesHandler::startService, &firebaseMessagesHandler);
@@ -49,6 +50,22 @@ void Core::setupKnownSensors()
     else
     {
         ofstream createdFile(KNOWN_PATH);
+        createdFile.close();
+    }
+};
+
+void Core::setupTokenList() {
+    ifstream readingFile(TOKEN_PATH);
+    string line;
+    if (readingFile.is_open())
+    {
+        while (getline(readingFile, line))
+            tokenList.push_back(line);
+        readingFile.close();
+    }
+    else
+    {
+        ofstream createdFile(TOKEN_PATH);
         createdFile.close();
     }
 };
@@ -376,4 +393,23 @@ void Core::removeSensor(TCPComm &tcpComm, string message)
         tcpComm.sendMessage(message::REMOVE_SENSOR_FAILED);
     }
     eventHandler.mSensorList.unlock();
+}
+
+void Core::handleFirebaseToken(string token) {
+    if(std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end()) {
+        FirebaseOperation operation("add");
+        operation.addRegID(token);
+        cout << "Adding Token: " << token <<endl;
+        firebaseMessagesHandler.addMessage(&operation);
+        statical::newFirebaseNotification.notify_all();
+        tokenList.push_back(token);
+        updateTokenList();
+    }
+}
+
+void Core::updateTokenList() {
+    ofstream out(TOKEN_PATH, ios::trunc);
+    for (string s : tokenList)
+        out << s << endl;
+    out.close();
 }

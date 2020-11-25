@@ -13,9 +13,9 @@ using namespace std;
 
 class FirebaseMessagesHandler {
     private:
-        list<FirebaseNotification> notificationsBuffer;
+        list<FirebaseMessage*> messagesBuffer;
     public:
         FirebaseMessagesHandler();
         void startService();
-        void addNotification(FirebaseNotification notification);
+        void addMessage(FirebaseMessage* message);
 };

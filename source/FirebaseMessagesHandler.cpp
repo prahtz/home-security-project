@@ -7,18 +7,18 @@ FirebaseMessagesHandler::FirebaseMessagesHandler() {
 void FirebaseMessagesHandler::startService() {
     while(true) {
         unique_lock<mutex> lock(statical::mNewFirebaseNotification);
-        statical::newFirebaseNotification.wait(lock, [this] () {return !notificationsBuffer.empty();});
-        FirebaseNotification notification = notificationsBuffer.back();
-        notificationsBuffer.pop_back();
+        statical::newFirebaseNotification.wait(lock, [this] () {return !messagesBuffer.empty();});
+        FirebaseMessage* message = messagesBuffer.back();
+        messagesBuffer.pop_back();
         try
         {
             curlpp::Cleanup myCleanup;
             curlpp::Easy myRequest;
            
-            string httpBody = notification.getHttpBody();
-            myRequest.setOpt<Url>(notification.getUrl());
+            string httpBody = message->getHttpBody();
+            myRequest.setOpt<Url>(message->getUrl());
             myRequest.setOpt<CaInfo>("./curl-ca-bundle.crt");
-            myRequest.setOpt<HttpHeader>(notification.getHeader());
+            myRequest.setOpt<HttpHeader>(message->getHeader());
             myRequest.setOpt<PostFields>(httpBody);
             myRequest.setOpt<PostFieldSize>(httpBody.length());
 
@@ -36,6 +36,6 @@ void FirebaseMessagesHandler::startService() {
     }
 }
 
-void FirebaseMessagesHandler::addNotification(FirebaseNotification notification) {
-    notificationsBuffer.push_front(notification);
+void FirebaseMessagesHandler::addMessage(FirebaseMessage* message) {
+    messagesBuffer.push_front(message);
 }

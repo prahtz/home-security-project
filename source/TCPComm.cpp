@@ -34,7 +34,7 @@ void TCPComm::startReceive() {
         }
         else {
             message = message + ((string)buf).substr(0, r);
-            unsigned int pos = message.find(message::EOM);
+            size_t pos = message.find(message::EOM);
             while (pos != string::npos)
             {
                 mMessageBuffer.lock();

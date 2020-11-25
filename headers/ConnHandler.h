@@ -1,5 +1,3 @@
-#pragma comment(lib, "Ws2_32.lib")
-
 #include "Core.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,7 +8,6 @@ using namespace std;
 #define DOMAIN  AF_INET
 #define TRANSPORT SOCK_STREAM
 #define PROTOCOL IPPROTO_TCP
-#define DNS_DOMAIN "prah.homepc.it"
 
 class ConnHandler {
     private:
@@ -18,17 +15,18 @@ class ConnHandler {
         Core core;
         const int MAX_CLIENTS = 10;
         mutex mCore;
+        string lan_IP;
+        string port;
 
         void setupServerSocket();
         void startClientServerComunication();
 
-        #ifndef _WIN32
         int closesocket(int socket) {
-                return close(socket);
+            return close(socket);
         }   
-        #endif
     public:
         ConnHandler();
+        ConnHandler(string lan_IP, string port);
         void clientThread(int clientSocket);
 
 };

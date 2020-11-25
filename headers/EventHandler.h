@@ -10,6 +10,7 @@
 #include <thread>
 
 #define KNOWN_PATH "./csv/known.csv"
+#define TOKEN_PATH "./csv/tokens.csv"
 
 class EventHandler {
     private:

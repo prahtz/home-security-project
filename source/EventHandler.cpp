@@ -64,7 +64,6 @@ void EventHandler::startListening()
     }
 }
 
-//TO TEST
 void EventHandler::onSensorOpen(Sensor *sensor)
 {
     mSensorList.lock();
@@ -75,7 +74,6 @@ void EventHandler::onSensorOpen(Sensor *sensor)
     mSensorList.unlock();
 }
 
-//TO TEST
 void EventHandler::onSensorClose(Sensor *sensor)
 {
     mSensorList.lock();
@@ -164,6 +162,6 @@ void EventHandler::activateDefenses()
     FirebaseNotification notification;
     notification.setTitle("ALLARME ATTIVO");
     notification.setBody("Intrusione rilevata!");
-    firebaseMessagesHandler->addNotification(notification);
+    firebaseMessagesHandler->addMessage(&notification);
     statical::newFirebaseNotification.notify_all();
 }

@@ -14,7 +14,7 @@
 using namespace curlpp::options;
 
 
-int main() {
+int main(int argc, char *argv[]) {
 	try
 	{
 		// That's all that is needed to do cleanup of used resources (RAII style).
@@ -72,6 +72,11 @@ int main() {
 		std::cout << e.what() << std::endl;
 	}
 
-    ConnHandler ch;
+	if(argc != 3) {
+		cout << "Invalid arguments" << endl;
+		return -1;
+	}
+
+    ConnHandler ch(argv[1], argv[2]);
     return 0;
 }
