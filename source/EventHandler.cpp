@@ -159,9 +159,9 @@ void EventHandler::activateDefenses()
     else
         transmitter->mTransmit.unlock();
 
-    FirebaseNotification notification;
-    notification.setTitle("ALLARME ATTIVO");
-    notification.setBody("Intrusione rilevata!");
-    firebaseMessagesHandler->addMessage(&notification);
+    FirebaseNotification* notification = new FirebaseNotification();
+    notification->setTitle("ALLARME ATTIVO");
+    notification->setBody("Intrusione rilevata!");
+    firebaseMessagesHandler->addMessage(notification);
     statical::newFirebaseNotification.notify_all();
 }

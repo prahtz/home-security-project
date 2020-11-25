@@ -397,10 +397,10 @@ void Core::removeSensor(TCPComm &tcpComm, string message)
 
 void Core::handleFirebaseToken(string token) {
     if(std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end()) {
-        FirebaseOperation operation("add");
-        operation.addRegID(token);
+        FirebaseOperation* operation = new FirebaseOperation("add");
+        operation->addRegID(token);
         cout << "Adding Token: " << token <<endl;
-        firebaseMessagesHandler.addMessage(&operation);
+        firebaseMessagesHandler.addMessage(operation);
         statical::newFirebaseNotification.notify_all();
         tokenList.push_back(token);
         updateTokenList();

@@ -32,7 +32,7 @@ void FirebaseMessagesHandler::startService() {
         {
             std::cout << e.what() << std::endl;
         }
-
+        delete message;
     }
 }
 
