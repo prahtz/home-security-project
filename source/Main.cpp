@@ -1,11 +1,7 @@
 #include "ConnHandler.h"
 #include <stdio.h>
-
 #include <cstdlib>
 #include <cerrno>
-
-
-
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -27,18 +23,20 @@ int main(int argc, char *argv[]) {
 		/*
 		header.push_back("Content-Type:application/json");
 		header.push_back("Authorization:key=AAAArp0-el4:APA91bFPiEP_Q0o8J6jP_9EvuUpFjcEqe-IG9XQF62WCiqJO9NJH7F_Qusdv2vGf1qiyvAIm5LqWUOkZvZLXpGrar1x34rCvzOvnyp6IUvr4H_mXqfCHoNoHyKP3BbRqwGTu4Q1HSOmR");
-		string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n},\n\"to\" : \"cSyIBvc7S0G3c9JZZHtI7V:APA91bFwEICEonE8wKLoe3c-1AZeSJtIQtq7ajBIMGRKW5GbKc--6fmL7rYlo8hnz4mv_oYEWEPOL9dO0cA2HC_dZoWSSqdGyU4Yey1zEjl_8pZr8yQYZGWRKFrb8j6PATydE0IqYOCJ\"\n}";
+		//string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cY6GVFLoQJS9l0-ZXsiBB8:APA91bE9ZKK3YiTkl4qUvSaIqZKuO007IKzLmMKS763zB8Kfrn2TkDlUKlJeilBp1gTEF6cvNF2k5nAzdvwcE3vLP4jKJr76FXellDv1EWjF452NuJm1yA6EZn7Zc8FdCSyvCddyzrJM\"\n}";
+		string httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cVmrwY_uSxGLz_3gqhTytu:APA91bEkDjKIEV0TEI1Vx6BJFTWlDB7HY1TzX1WDZ33LpYMJzb1FTqCE2gRFztbM2vGD8t85oJeTUDS1ci6dkdhvhyzqQB_4DVqc_qWGLSURCtFYPO86Ixq56zjGdYnAcwt3QUSyXoYZ\"\n}";
 		// Set the URL.
 		myRequest.setOpt<Url>("https://fcm.googleapis.com/fcm/send");
 		myRequest.setOpt<HttpHeader>(header);
 		myRequest.setOpt<PostFields>(httpBody);
-      	myRequest.setOpt<PostFieldSize>(httpBody.length());*/
+      	myRequest.setOpt<PostFieldSize>(httpBody.length());
+		myRequest.perform();*/
 		
 		/*
 		header.push_back("Content-Type:application/json");
 		header.push_back("Authorization:key=AAAArp0-el4:APA91bFPiEP_Q0o8J6jP_9EvuUpFjcEqe-IG9XQF62WCiqJO9NJH7F_Qusdv2vGf1qiyvAIm5LqWUOkZvZLXpGrar1x34rCvzOvnyp6IUvr4H_mXqfCHoNoHyKP3BbRqwGTu4Q1HSOmR");
 		header.push_back("project_id:749962426974");
-		string httpBody = "{ \"operation\": \"create\",\n\"notification_key_name\": \"androidDevices\",\n\"registration_ids\": [\"cSyIBvc7S0G3c9JZZHtI7V:APA91bFwEICEonE8wKLoe3c-1AZeSJtIQtq7ajBIMGRKW5GbKc--6fmL7rYlo8hnz4mv_oYEWEPOL9dO0cA2HC_dZoWSSqdGyU4Yey1zEjl_8pZr8yQYZGWRKFrb8j6PATydE0IqYOCJ\"]\n}";
+		string httpBody = "{ \"operation\": \"create\",\n\"notification_key_name\": \"androidDevices\",\n\"registration_ids\": [\"cygQYOKOTN2Xmc8jyXFEw4:APA91bEz0yE1iiit7_tQdFMrB9lK2jgwhoVTKkmOklgySv8PS693NvxJlyPhhoS-5A8pV-zw8a_Hc-hwMqYRA6MPa8Bqvv4Z8dijoiaxYcw3LnHP2M02gF28kOf8zJWaRoib5uLHhOjL\"]\n}";
 		// Set the URL.
 		myRequest.setOpt<Url>("https://fcm.googleapis.com/fcm/notification");
 		myRequest.setOpt<HttpHeader>(header);
