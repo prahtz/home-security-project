@@ -1,6 +1,6 @@
 #include "Core.h"
 
-Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &codeMap)
+Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &tokenList, &codeMap)
 {
     setupKnownSensors();
     setupTokenList();

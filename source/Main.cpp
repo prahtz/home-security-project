@@ -60,6 +60,22 @@ int main(int argc, char *argv[]) {
 		// Send request and get a result.
 		// By default the result goes to standard output.
 		myRequest.perform();*/
+		/*
+		string notification_key = "APA91bFyPthniy3dbDzXVPAexa26XXSqcfL00xHY3_TNdoJELgADQ_Jw7BHieac7mIVY70duFaPhU-KkWHlTaWZ7ENmoAUevDxk-tw2oe0WdoOMG_-IPf6g";
+		//notification_key = "fF05oSO1TlWfAjPNnmYUjF:APA91bErFT-Xv8gKPRqdaFX4nkDZ-jnTi7hnUeUwKt_n8Eh1noHgKI5WaOHAmVvVS15Vxyu1eyLqUnTvBdPpFZ6EN8SNeGKVFbsMg-2TYjzjL5bVOjHRmp0UowaW7eURacB0YH9xi_fw";
+		notification_key = "eN3fC93HQo6B6ebFAMt32M:APA91bGzr3NCz9VUgDDugbI0KNtO9FMK7v6iID-h0BAXjjLByAev4vJDyEKYNhyVV-eJowWda49GbgaeutE4fgLiJx6qxrnyu4VLwj2hrENGfMwYsM2GRE4LCS6BQdRV74ce2Brmc0f5";
+		header.push_back("Content-Type:application/json");
+		header.push_back("Authorization:key=AAAArp0-el4:APA91bFPiEP_Q0o8J6jP_9EvuUpFjcEqe-IG9XQF62WCiqJO9NJH7F_Qusdv2vGf1qiyvAIm5LqWUOkZvZLXpGrar1x34rCvzOvnyp6IUvr4H_mXqfCHoNoHyKP3BbRqwGTu4Q1HSOmR");
+		//string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cY6GVFLoQJS9l0-ZXsiBB8:APA91bE9ZKK3YiTkl4qUvSaIqZKuO007IKzLmMKS763zB8Kfrn2TkDlUKlJeilBp1gTEF6cvNF2k5nAzdvwcE3vLP4jKJr76FXellDv1EWjF452NuJm1yA6EZn7Zc8FdCSyvCddyzrJM\"\n}";
+		string httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"" + notification_key +"\"\n}";
+		// Set the URL.
+		myRequest.setOpt<Url>("https://fcm.googleapis.com/fcm/send");
+		myRequest.setOpt<HttpHeader>(header);
+		myRequest.setOpt<PostFields>(httpBody);
+      	myRequest.setOpt<PostFieldSize>(httpBody.length());
+		myRequest.perform();*/
+
+		/*\"notification\": { \"body\": \"allarme\", \"title\": \"we\" }*/
 	}
 	catch(curlpp::RuntimeError & e)
 	{

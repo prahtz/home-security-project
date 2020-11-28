@@ -18,6 +18,7 @@ class EventHandler {
         Transmitter* transmitter;
         FirebaseMessagesHandler* firebaseMessagesHandler;
         list<Sensor*>* knownSensorList;
+        list<string> *tokenList;
         map<code, pair<Action, Sensor*>*>* codeMap;
   
         void onSensorOpen(Sensor* sensor);
@@ -37,7 +38,7 @@ class EventHandler {
         atomic<code> newCode;
 
         EventHandler(){}
-        EventHandler(Receiver* receiver, Transmitter* transmitter, FirebaseMessagesHandler* firebaseMessagesHandler, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap);
+        EventHandler(Receiver* receiver, Transmitter* transmitter, FirebaseMessagesHandler* firebaseMessagesHandler, list<Sensor*>* knownSensorList, list<string> *tokenList, map<code, pair<Action, Sensor*>*>* codeMap);
 
         void updateKnownFile();
         void startListening();
