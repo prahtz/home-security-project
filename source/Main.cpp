@@ -67,7 +67,32 @@ int main(int argc, char *argv[]) {
 		header.push_back("Content-Type:application/json");
 		header.push_back("Authorization:key=AAAArp0-el4:APA91bFPiEP_Q0o8J6jP_9EvuUpFjcEqe-IG9XQF62WCiqJO9NJH7F_Qusdv2vGf1qiyvAIm5LqWUOkZvZLXpGrar1x34rCvzOvnyp6IUvr4H_mXqfCHoNoHyKP3BbRqwGTu4Q1HSOmR");
 		//string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cY6GVFLoQJS9l0-ZXsiBB8:APA91bE9ZKK3YiTkl4qUvSaIqZKuO007IKzLmMKS763zB8Kfrn2TkDlUKlJeilBp1gTEF6cvNF2k5nAzdvwcE3vLP4jKJr76FXellDv1EWjF452NuJm1yA6EZn7Zc8FdCSyvCddyzrJM\"\n}";
-		string httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"" + notification_key +"\"\n}";
+		string httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  }, \"android\": { \"ttl\": \"0\"},\n\"to\" : \"" + notification_key +"\"\n}";
+		// Set the URL.
+		myRequest.setOpt<Url>("https://fcm.googleapis.com/fcm/send");
+		myRequest.setOpt<HttpHeader>(header);
+		myRequest.setOpt<PostFields>(httpBody);
+      	myRequest.setOpt<PostFieldSize>(httpBody.length());
+		myRequest.perform();
+
+
+		notification_key = "fF05oSO1TlWfAjPNnmYUjF:APA91bErFT-Xv8gKPRqdaFX4nkDZ-jnTi7hnUeUwKt_n8Eh1noHgKI5WaOHAmVvVS15Vxyu1eyLqUnTvBdPpFZ6EN8SNeGKVFbsMg-2TYjzjL5bVOjHRmp0UowaW7eURacB0YH9xi_fw";
+		header.push_back("Content-Type:application/json");
+		header.push_back("Authorization:key=AAAArp0-el4:APA91bFPiEP_Q0o8J6jP_9EvuUpFjcEqe-IG9XQF62WCiqJO9NJH7F_Qusdv2vGf1qiyvAIm5LqWUOkZvZLXpGrar1x34rCvzOvnyp6IUvr4H_mXqfCHoNoHyKP3BbRqwGTu4Q1HSOmR");
+		//string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cY6GVFLoQJS9l0-ZXsiBB8:APA91bE9ZKK3YiTkl4qUvSaIqZKuO007IKzLmMKS763zB8Kfrn2TkDlUKlJeilBp1gTEF6cvNF2k5nAzdvwcE3vLP4jKJr76FXellDv1EWjF452NuJm1yA6EZn7Zc8FdCSyvCddyzrJM\"\n}";
+		httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  }, \"android\": { \"ttl\": \"0\"},\n\"to\" : \"" + notification_key +"\"\n}";
+		// Set the URL.
+		myRequest.setOpt<Url>("https://fcm.googleapis.com/fcm/send");
+		myRequest.setOpt<HttpHeader>(header);
+		myRequest.setOpt<PostFields>(httpBody);
+      	myRequest.setOpt<PostFieldSize>(httpBody.length());
+		myRequest.perform();
+
+		notification_key = "c3USeT5SSzqbH0yX41T9Ki:APA91bFZDvibMHQ5_3YZ1OmehfUxeQmDQ7_Jk5o6kB6SV_PhMTntCD8Kn1u0F8BN6l5vhw0BY8f-YyMKdsaV_-_bRo8-OywrOC3XnslThr890ipxzXjeBJSC_gs6_QFhT_ZWwCqjt8xa";
+		header.push_back("Content-Type:application/json");
+		header.push_back("Authorization:key=AAAArp0-el4:APA91bFPiEP_Q0o8J6jP_9EvuUpFjcEqe-IG9XQF62WCiqJO9NJH7F_Qusdv2vGf1qiyvAIm5LqWUOkZvZLXpGrar1x34rCvzOvnyp6IUvr4H_mXqfCHoNoHyKP3BbRqwGTu4Q1HSOmR");
+		//string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cY6GVFLoQJS9l0-ZXsiBB8:APA91bE9ZKK3YiTkl4qUvSaIqZKuO007IKzLmMKS763zB8Kfrn2TkDlUKlJeilBp1gTEF6cvNF2k5nAzdvwcE3vLP4jKJr76FXellDv1EWjF452NuJm1yA6EZn7Zc8FdCSyvCddyzrJM\"\n}";
+		httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  }, \"android\": { \"ttl\": \"0\"},\n\"to\" : \"" + notification_key +"\"\n}";
 		// Set the URL.
 		myRequest.setOpt<Url>("https://fcm.googleapis.com/fcm/send");
 		myRequest.setOpt<HttpHeader>(header);

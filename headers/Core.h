@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <fstream>
 #include <list>
@@ -13,6 +15,7 @@
 #include "Exceptions.h"
 #include "TCPComm.h"
 #include "FirebaseOperation.h"
+#include "ClientUpdater.h"
 
 using namespace std;
 
@@ -34,22 +37,22 @@ class Core{
         void updateTokenList();
         int getNewSensorID();
 
-        void registerCloseCode(TCPComm &tcpComm, DoorSensor *ds);
-        void registerOpenCode(TCPComm &tcpComm, DoorSensor *ds);
-        void registerSensorName(TCPComm &tcpComm, DoorSensor *ds);
+        void registerCloseCode(TCPComm* tcpComm, DoorSensor *ds);
+        void registerOpenCode(TCPComm* tcpComm, DoorSensor *ds);
+        void registerSensorName(TCPComm* tcpComm, DoorSensor *ds);
 
     public:
         Core(); 
         bool addSensorToList(Sensor* s);
         bool removeSensorFromList(Sensor* s);
-        void activateAlarm(TCPComm &tcpComm);
-        void deactivateAlarm(TCPComm &tcpComm);
-        void sensorList(TCPComm &tcpComm);
-        void removeSensor(TCPComm &tcpComm, string message);
-        void deactivateSensor(TCPComm &tcpComm, string message);
-        void activateSensor(TCPComm &tcpComm, string message);
+        void activateAlarm(TCPComm* tcpComm);
+        void deactivateAlarm(TCPComm* tcpComm);
+        void sensorList(TCPComm* tcpComm);
+        void removeSensor(TCPComm* tcpComm, string message);
+        void deactivateSensor(TCPComm* tcpComm, string message);
+        void activateSensor(TCPComm* tcpComm, string message);
         bool isAlarmReady();
-        void registerNewDoorSensor(TCPComm &tcpComm);
+        void registerNewDoorSensor(TCPComm* tcpComm);
         void writeSensorToFile(Sensor* s);
         void handleFirebaseToken(string token);
 };

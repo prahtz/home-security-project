@@ -23,8 +23,6 @@ void ConnHandler::setupServerSocket() {
     int reuseaddr = 1;
     int reuseport = 1;
     setsockopt(serverSocket, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
-    //setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
-    //setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &reuseaddr, sizeof(int));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(lan_IP.c_str());
     serv_addr.sin_port = htons(portno);
@@ -36,35 +34,39 @@ void ConnHandler::setupServerSocket() {
 }
 
 void ConnHandler::startClientServerComunication() {
-    
-    list<std::thread> clientThreads;
     int i = 0;
     while(true) {
         int clientSocket = INVALID_SOCKET;
         while(clientSocket == INVALID_SOCKET) 
             clientSocket = accept(serverSocket, NULL, NULL);
-        clientThreads.push_back(std::thread(&ConnHandler::clientThread, this, clientSocket));
+        initClientSocket(clientSocket);
+        TCPComm tcpComm(clientSocket);
+        ClientUpdater::clientThreads.push_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, &tcpComm));
+        ClientUpdater::tcpCommList.push_back(&tcpComm);
         i++;
-        if(i >= MAX_CLIENTS) {
-            list<thread>::iterator it = clientThreads.begin();
+        if(i > MAX_CLIENTS) {
+            list<future<void>>::iterator it = ClientUpdater::clientThreads.begin();
+            list<TCPComm*>::iterator itTCP = ClientUpdater::tcpCommList.begin();
             while(i >= MAX_CLIENTS) {
-                for(int j = 0; j < clientThreads.size(); j++) {
-                    if((*it).joinable()) {
-                        (*it).join();
-                        it = clientThreads.erase(it);
+                while(it != ClientUpdater::clientThreads.end()) {
+                    if(ClientUpdater::is_ready((*it))) {
+                        it = ClientUpdater::clientThreads.erase(it);
+                        itTCP = ClientUpdater::tcpCommList.erase(itTCP);
                         i--;
                     }
-                    else
+                    else {
                         ++it;
+                        ++itTCP;
+                    }
                 }
-                usleep(1000);
             }
                 
         }
     }
     closesocket(serverSocket);
 }
-void ConnHandler::clientThread(int clientSocket) {
+
+void ConnHandler::initClientSocket(int clientSocket) {
     int yes = 1;
     setsockopt(clientSocket, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));
     int idle = 1;
@@ -75,18 +77,18 @@ void ConnHandler::clientThread(int clientSocket) {
 
     int maxpkt = 10;
     setsockopt(clientSocket, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
+}
 
-    char *buf = new char[BUFSIZ];
+void ConnHandler::clientThread(int clientSocket, TCPComm* tcpComm) {
     string message;
-    TCPComm tcpComm(clientSocket);
-    thread tcpThread = thread(&TCPComm::startReceive, &tcpComm);
+    thread tcpThread = thread(&TCPComm::startReceive, tcpComm);
     do {
         unique_lock<mutex> clientLock(statical::mSharedCondition);
-        statical::sharedCondition.wait(clientLock, [this, &tcpComm] {
-            return tcpComm.isAvailable();
+        statical::sharedCondition.wait(clientLock, [this, tcpComm] {
+            return tcpComm->isAvailable();
         });
         clientLock.unlock();
-        message = tcpComm.getMessage();
+        message = tcpComm->getMessage();
         if(message == message::ACTIVATE_ALARM) {
             mCore.lock();
             core.activateAlarm(tcpComm);
@@ -102,6 +104,14 @@ void ConnHandler::clientThread(int clientSocket) {
         }else if (message == message::SENSOR_LIST){
             mCore.lock();
             core.sensorList(tcpComm);
+            mCore.unlock();
+        }
+        else if(message == message::INFO_REQUEST) {
+            mCore.lock();
+            if(EventHandler::alarmActivated)
+                tcpComm->sendMessage(message::ALARM_ACTIVE);
+            else
+                tcpComm->sendMessage(message::ALARM_INACTIVE);
             mCore.unlock();
         }
         else if(message.length() >= message::DEACTIVATE_SENSOR.length() && message.substr(message.length() - message::DEACTIVATE_SENSOR.length(), message.length()) == message::DEACTIVATE_SENSOR) {
@@ -125,7 +135,7 @@ void ConnHandler::clientThread(int clientSocket) {
             mCore.unlock();
         }
     }while(message != message::FAIL);
-    cout<<"Closing socket..."<<endl;
-    tcpThread.join();
     closesocket(clientSocket);
+    tcpThread.join();
+    cout<<"Closing socket..."<<endl;
 }

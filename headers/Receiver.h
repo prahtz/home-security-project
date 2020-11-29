@@ -1,3 +1,4 @@
+#pragma once
 #if defined(RPI)
     #include "RCSwitch.h"
 #else

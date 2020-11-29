@@ -1,3 +1,4 @@
+#pragma once
 #include "Receiver.h"
 #include "Transmitter.h"
 #include "DoorSensor.h"
@@ -32,9 +33,11 @@ class EventHandler {
         void activateDefenses();
         
     public:
+        static atomic<bool> alarmActivated;
+
         std::condition_variable codeAvailable, newCodeAvailable;
         std::mutex mSensorList, mNewCode, mFile, mAlarm;
-        atomic<bool> registerCode, codeArrived, alarmActivated, defensesActivated;
+        atomic<bool> registerCode, codeArrived, defensesActivated;
         atomic<code> newCode;
 
         EventHandler(){}

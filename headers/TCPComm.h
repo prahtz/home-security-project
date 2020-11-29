@@ -1,4 +1,5 @@
 
+#pragma once
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -33,6 +34,7 @@ class TCPComm {
     public:
         static condition_variable sharedCondition;
         static mutex mSharedCondition;
+        TCPComm(){};
         TCPComm(int clientSocket);
         void startReceive();
         void sendMessage(string message);

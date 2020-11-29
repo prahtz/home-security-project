@@ -1,4 +1,7 @@
+#pragma once
+
 #include "Core.h"
+#include "ClientUpdater.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sstream>
@@ -18,7 +21,11 @@ class ConnHandler {
         string lan_IP;
         string port;
 
+        //static list<std::thread> clientThreads;
+        //static list<TCPComm*> tcpCommList;
+
         void setupServerSocket();
+        void initClientSocket(int clientSocket);
         void startClientServerComunication();
 
         int closesocket(int socket) {
@@ -27,6 +34,5 @@ class ConnHandler {
     public:
         ConnHandler();
         ConnHandler(string lan_IP, string port);
-        void clientThread(int clientSocket);
-
+        void clientThread(int clientSocket, TCPComm* tcpComm); 
 };

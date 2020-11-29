@@ -1,5 +1,7 @@
 #include "EventHandler.h"
 
+atomic<bool> EventHandler::alarmActivated(false);
+
 EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler, list<Sensor *> *knownSensorList, list<string> *tokenList, map<code, pair<Action, Sensor *> *> *codeMap)
 {
     this->receiver = receiver;

@@ -1,3 +1,4 @@
+#pragma once
 #include "State.h"
 #include "SensorTypes.h"
 #include "Definitions.h"

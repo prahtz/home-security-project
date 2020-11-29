@@ -70,8 +70,6 @@ void Core::setupTokenList() {
     }
 };
 
-//TEST
-//Return true if sensor added, false otherwise
 bool Core::addSensorToList(Sensor *s)
 {
     list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
@@ -82,8 +80,7 @@ bool Core::addSensorToList(Sensor *s)
     }
     return false;
 };
-//TEST
-//Return true if sensor removed, false otherwise
+
 bool Core::removeSensorFromList(Sensor *s)
 {
     int listSize = knownSensorList.size();
@@ -92,8 +89,7 @@ bool Core::removeSensorFromList(Sensor *s)
         return true;
     return false;
 };
-//TEST
-//Return true if alarm is activatable, false otherwise
+
 bool Core::isAlarmReady()
 {
     eventHandler.mSensorList.lock();
@@ -107,7 +103,6 @@ bool Core::isAlarmReady()
     return false;
 }
 
-//??
 int Core::getNewSensorID()
 {
     if (knownSensorList.empty())
@@ -115,7 +110,7 @@ int Core::getNewSensorID()
     return (*(--knownSensorList.end()))->getSensorID() + 1;
 }
 
-void Core::registerNewDoorSensor(TCPComm &tcpComm)
+void Core::registerNewDoorSensor(TCPComm* tcpComm)
 {
     DoorSensor *ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
@@ -129,7 +124,7 @@ void Core::registerNewDoorSensor(TCPComm &tcpComm)
     catch (AbortException &e)
     {
         cout << e.what() << endl;
-        tcpComm.flush();
+        tcpComm->flush();
         eventHandler.registerCode = false;
         delete ds;
         return;
@@ -137,8 +132,8 @@ void Core::registerNewDoorSensor(TCPComm &tcpComm)
     catch (TimeOutException &e)
     {
         cout << e.what() << endl;
-        tcpComm.flush();
-        tcpComm.sendMessage(message::TIME_OUT);
+        tcpComm->flush();
+        tcpComm->sendMessage(message::TIME_OUT);
         eventHandler.registerCode = false;
         delete ds;
         return;
@@ -146,26 +141,26 @@ void Core::registerNewDoorSensor(TCPComm &tcpComm)
     catch (RegisterNewSensorException &e)
     {
         cout << e.what() << endl;
-        tcpComm.sendMessage(message::REGISTER_FAILED);
+        tcpComm->sendMessage(message::REGISTER_FAILED);
         delete ds;
         return;
     }
 
-    tcpComm.sendMessage(message::REGISTER_SUCCESS);
+    tcpComm->sendMessage(message::REGISTER_SUCCESS);
 }
 
-void Core::registerCloseCode(TCPComm &tcpComm, DoorSensor *ds)
+void Core::registerCloseCode(TCPComm* tcpComm, DoorSensor *ds)
 {
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(statical::mSharedCondition);
     bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-        return (bool)eventHandler.codeArrived || tcpComm.isAvailable();
+        return (bool)eventHandler.codeArrived || tcpComm->isAvailable();
     });
 
-    if (tcpComm.isAvailable())
+    if (tcpComm->isAvailable())
     {
         
-        if (tcpComm.getMessage() == message::ABORT)
+        if (tcpComm->getMessage() == message::ABORT)
             throw AbortException("Register sensor abort, first step.");
         throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, first step.");
     }
@@ -176,10 +171,10 @@ void Core::registerCloseCode(TCPComm &tcpComm, DoorSensor *ds)
     code closeCode = eventHandler.newCode;
     ds->setCloseCode(closeCode);
 
-    tcpComm.sendMessage(message::NEXT_CODE);
+    tcpComm->sendMessage(message::NEXT_CODE);
 }
 
-void Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds)
+void Core::registerOpenCode(TCPComm* tcpComm, DoorSensor *ds)
 {
     bool go = true;
     code openCode;
@@ -187,11 +182,11 @@ void Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds)
     while (go)
     {
         bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-            return ((bool)eventHandler.codeArrived) || tcpComm.isAvailable();
+            return ((bool)eventHandler.codeArrived) || tcpComm->isAvailable();
         });
 
-        if (tcpComm.isAvailable()) {
-            string m = tcpComm.getMessage();
+        if (tcpComm->isAvailable()) {
+            string m = tcpComm->getMessage();
             if (m == message::ABORT)
                 throw AbortException("Register sensor abort, second step.");
             throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, second step");
@@ -204,30 +199,30 @@ void Core::registerOpenCode(TCPComm &tcpComm, DoorSensor *ds)
         if (openCode != ds->getCloseCode())
         {
             ds->setOpenCode(openCode);
-            tcpComm.sendMessage(message::STRING);
+            tcpComm->sendMessage(message::STRING);
             go = false;
         }
     }
     eventHandler.registerCode = false;
 }
 
-void Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds)
+void Core::registerSensorName(TCPComm* tcpComm, DoorSensor *ds)
 {
     unique_lock<mutex> registerLock(statical::mSharedCondition);
     bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-        return tcpComm.isAvailable();
+        return tcpComm->isAvailable();
     });
 
-    if (tcpComm.isAvailable())
+    if (tcpComm->isAvailable())
     {
-        string message = tcpComm.getMessage();
+        string message = tcpComm->getMessage();
         if (message == message::STRING)
         {
-            tcpComm.sendMessage(message::ACK);
+            tcpComm->sendMessage(message::ACK);
             statical::sharedCondition.wait(registerLock, [this, &tcpComm] {
-                return tcpComm.isAvailable();
+                return tcpComm->isAvailable();
             });
-            string sensorName = tcpComm.getMessage();
+            string sensorName = tcpComm->getMessage();
             if (sensorName != message::FAIL && sensorName != message::ABORT && sensorName != message::STRING)
             {
                 ds->setSensorName(sensorName);
@@ -259,18 +254,19 @@ void Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds)
         throw TimeOutException("Register sensor timed out, third step");
 }
 
-void Core::activateAlarm(TCPComm &tcpComm)
+void Core::activateAlarm(TCPComm* tcpComm)
 {
     if (isAlarmReady() && !eventHandler.alarmActivated && !eventHandler.defensesActivated)
     {
         eventHandler.alarmActivated = true;
-        tcpComm.sendMessage(message::ACTIVATION_SUCCESS);
+        tcpComm->sendMessage(message::ACTIVATION_SUCCESS);
+        ClientUpdater::sendUpdatesToClients();
     }
     else
-        tcpComm.sendMessage(message::ACTIVATION_FAILED);
+        tcpComm->sendMessage(message::ACTIVATION_FAILED);
 }
 
-void Core::deactivateAlarm(TCPComm &tcpComm)
+void Core::deactivateAlarm(TCPComm* tcpComm)
 {
     if (eventHandler.alarmActivated || eventHandler.defensesActivated)
     {
@@ -283,24 +279,25 @@ void Core::deactivateAlarm(TCPComm &tcpComm)
             transmitter.startTransmitting.notify_all();
             eventHandler.defensesActivated = false;
         }
-        tcpComm.sendMessage(message::DEACTIVATION_SUCCESS);
+        tcpComm->sendMessage(message::DEACTIVATION_SUCCESS);
+        ClientUpdater::sendUpdatesToClients();
     }
     else
     {
-        tcpComm.sendMessage(message::DEACTIVATION_FAILED);
+        tcpComm->sendMessage(message::DEACTIVATION_FAILED);
     }
 }
 
-void Core::sensorList(TCPComm &tcpComm)
+void Core::sensorList(TCPComm* tcpComm)
 {
     eventHandler.mSensorList.lock();
     for (Sensor *s : knownSensorList)
-        tcpComm.sendMessage(s->getSensorInfo());
+        tcpComm->sendMessage(s->getSensorInfo());
     eventHandler.mSensorList.unlock();
-    tcpComm.sendMessage(message::END_SENSOR_LIST);
+    tcpComm->sendMessage(message::END_SENSOR_LIST);
 }
 
-void Core::deactivateSensor(TCPComm &tcpComm, string message)
+void Core::deactivateSensor(TCPComm* tcpComm, string message)
 {
     int sensorID = stoi(message.substr(0, message.length() - message::DEACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
@@ -313,7 +310,7 @@ void Core::deactivateSensor(TCPComm &tcpComm, string message)
             {
                 (*it)->isEnabled(false);
                 eventHandler.updateKnownFile();
-                tcpComm.sendMessage(message::DEACTIVATE_SENSOR_SUCCESS);
+                tcpComm->sendMessage(message::DEACTIVATE_SENSOR_SUCCESS);
             }
             else
                 throw SensorAlreadyDisabledException("Sensore già disabilitato!");
@@ -326,12 +323,12 @@ void Core::deactivateSensor(TCPComm &tcpComm, string message)
     catch (DisableSensorException &e)
     {
         cout << e.what() << endl;
-        tcpComm.sendMessage(message::DEACTIVATE_SENSOR_FAILED);
+        tcpComm->sendMessage(message::DEACTIVATE_SENSOR_FAILED);
     }
     eventHandler.mSensorList.unlock();
 }
 
-void Core::activateSensor(TCPComm &tcpComm, string message)
+void Core::activateSensor(TCPComm* tcpComm, string message)
 {
     int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
@@ -348,7 +345,7 @@ void Core::activateSensor(TCPComm &tcpComm, string message)
                 }
                 (*it)->isEnabled(true);
                 eventHandler.updateKnownFile();
-                tcpComm.sendMessage(message::ACTIVATE_SENSOR_SUCCESS);
+                tcpComm->sendMessage(message::ACTIVATE_SENSOR_SUCCESS);
             }
             else
                 throw SensorAlreadyEnabledException("Sensore già abilitato!");
@@ -361,12 +358,12 @@ void Core::activateSensor(TCPComm &tcpComm, string message)
     catch (EnableSensorException &e)
     {
         cout << e.what() << endl;
-        tcpComm.sendMessage(message::ACTIVATE_SENSOR_FAILED);
+        tcpComm->sendMessage(message::ACTIVATE_SENSOR_FAILED);
     }
     eventHandler.mSensorList.unlock();
 }
 
-void Core::removeSensor(TCPComm &tcpComm, string message)
+void Core::removeSensor(TCPComm* tcpComm, string message)
 {
     int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
@@ -380,7 +377,7 @@ void Core::removeSensor(TCPComm &tcpComm, string message)
                 codeMap.erase(sensorCode);
             knownSensorList.erase(it);
             eventHandler.updateKnownFile();
-            tcpComm.sendMessage(message::REMOVE_SENSOR_SUCCESS);
+            tcpComm->sendMessage(message::REMOVE_SENSOR_SUCCESS);
         }
         else
         {
@@ -390,7 +387,7 @@ void Core::removeSensor(TCPComm &tcpComm, string message)
     catch (RemoveSensorException &e)
     {
         cout << e.what() << endl;
-        tcpComm.sendMessage(message::REMOVE_SENSOR_FAILED);
+        tcpComm->sendMessage(message::REMOVE_SENSOR_FAILED);
     }
     eventHandler.mSensorList.unlock();
 }

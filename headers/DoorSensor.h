@@ -1,3 +1,4 @@
+#pragma once
 #include "Sensor.h"
 #include <fstream>
 

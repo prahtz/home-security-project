@@ -1,4 +1,4 @@
-
+#pragma once
 #include <string>
 namespace message
 {
@@ -26,6 +26,9 @@ namespace message
     static const std::string REMOVE_SENSOR = "15";
     static const std::string REMOVE_SENSOR_SUCCESS = "16";
     static const std::string REMOVE_SENSOR_FAILED = "17";
+    static const std::string ALARM_ACTIVE = "18";
+    static const std::string ALARM_INACTIVE = "19";
+    static const std::string INFO_REQUEST = "1A";
     static const std::string EOM = "//eom";
     static const std::string FAIL = "//null";
 
