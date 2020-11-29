@@ -108,10 +108,7 @@ void ConnHandler::clientThread(int clientSocket, TCPComm* tcpComm) {
         }
         else if(message == message::INFO_REQUEST) {
             mCore.lock();
-            if(EventHandler::alarmActivated)
-                tcpComm->sendMessage(message::ALARM_ACTIVE);
-            else
-                tcpComm->sendMessage(message::ALARM_INACTIVE);
+            ClientUpdater::sendUpdatesToClients();
             mCore.unlock();
         }
         else if(message.length() >= message::DEACTIVATE_SENSOR.length() && message.substr(message.length() - message::DEACTIVATE_SENSOR.length(), message.length()) == message::DEACTIVATE_SENSOR) {

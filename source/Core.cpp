@@ -260,7 +260,6 @@ void Core::activateAlarm(TCPComm* tcpComm)
     {
         eventHandler.alarmActivated = true;
         tcpComm->sendMessage(message::ACTIVATION_SUCCESS);
-        ClientUpdater::sendUpdatesToClients();
     }
     else
         tcpComm->sendMessage(message::ACTIVATION_FAILED);
@@ -280,7 +279,6 @@ void Core::deactivateAlarm(TCPComm* tcpComm)
             eventHandler.defensesActivated = false;
         }
         tcpComm->sendMessage(message::DEACTIVATION_SUCCESS);
-        ClientUpdater::sendUpdatesToClients();
     }
     else
     {
