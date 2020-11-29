@@ -40,9 +40,9 @@ void ConnHandler::startClientServerComunication() {
         while(clientSocket == INVALID_SOCKET) 
             clientSocket = accept(serverSocket, NULL, NULL);
         initClientSocket(clientSocket);
-        TCPComm tcpComm(clientSocket);
-        ClientUpdater::clientThreads.push_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, &tcpComm));
-        ClientUpdater::tcpCommList.push_back(&tcpComm);
+        TCPComm* tcpComm = new TCPComm(clientSocket);
+        ClientUpdater::clientThreads.push_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, tcpComm));
+        ClientUpdater::tcpCommList.push_back(tcpComm);
         i++;
         if(i > MAX_CLIENTS) {
             list<future<void>>::iterator it = ClientUpdater::clientThreads.begin();
