@@ -15,6 +15,7 @@
 
 #include "FirebaseMessagesHandler.h"
 #include "FirebaseNotification.h"
+#include "Core.h"
 
 
 static std::atomic<bool> call;
@@ -27,14 +28,14 @@ static void callback() {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
         r = digitalRead(PIN);
         if(r == LOW_VALUE) {
-            std::cout << "testing" << std::endl;
-            string token = "fF05oSO1TlWfAjPNnmYUjF:APA91bErFT-Xv8gKPRqdaFX4nkDZ-jnTi7hnUeUwKt_n8Eh1noHgKI5WaOHAmVvVS15Vxyu1eyLqUnTvBdPpFZ6EN8SNeGKVFbsMg-2TYjzjL5bVOjHRmp0UowaW7eURacB0YH9xi_fw";
-            FirebaseNotification* notification = new FirebaseNotification();
-            notification->setTitle("CORRENTE ASSENTE!");
-            notification->setBody("Rilevata assenza di corrente presso la centralina.");
-            notification->setToken(token);
-            FirebaseMessagesHandler::addMessage(notification);
-            statical::newFirebaseNotification.notify_all();
+            for(string token : Core::tokenList) {
+                FirebaseNotification* notification = new FirebaseNotification();
+                notification->setTitle("CORRENTE ASSENTE!");
+                notification->setBody("Rilevata assenza di corrente presso la centralina.");
+                notification->setToken(token);
+                FirebaseMessagesHandler::addMessage(notification);
+                statical::newFirebaseNotification.notify_all();
+            }
         }
     }
 }

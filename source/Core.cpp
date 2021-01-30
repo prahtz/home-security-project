@@ -1,4 +1,5 @@
 #include "Core.h"
+list<string> Core::tokenList;
 
 Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &tokenList, &codeMap)
 {
