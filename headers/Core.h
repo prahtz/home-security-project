@@ -23,7 +23,6 @@ class Core{
     private:
         atomic<bool> abortProcedure;
         list<Sensor*> knownSensorList;
-        list<string> tokenList;
         map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
         Transmitter transmitter;
@@ -31,6 +30,8 @@ class Core{
         EventHandler eventHandler;
         thread receiverThread, eventHandlerThread, transmitterThread, firebaseMessagesHandlerThread;
         list<string> messageBuffer;
+
+
 
         void setupKnownSensors();
         void setupTokenList();
@@ -43,6 +44,7 @@ class Core{
 
     public:
         Core(); 
+        static list<string> tokenList;
         bool addSensorToList(Sensor* s);
         bool removeSensorFromList(Sensor* s);
         void activateAlarm(TCPComm* tcpComm);

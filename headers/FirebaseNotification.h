@@ -6,22 +6,25 @@
 
 using namespace std;
 
-class FirebaseNotification : public FirebaseMessage{
+class FirebaseNotification: public FirebaseMessage{
     private:
         string title = "";
         string body = "";
+        string ttl = "120";
+        string n_type = "";
         string token = "APA91bFyPthniy3dbDzXVPAexa26XXSqcfL00xHY3_TNdoJELgADQ_Jw7BHieac7mIVY70duFaPhU-KkWHlTaWZ7ENmoAUevDxk-tw2oe0WdoOMG_-IPf6g";
-        string ttl = "0";
     public:
         FirebaseNotification();
         string getBody();
         string getTitle();
         string getToken();
         string getTTL();
+        string getNType();
         virtual string getHttpBody() override;
         
         void setTitle(string title);
         void setBody(string body);
         void setToken(string token);
-        void setTTL();
+        void setTTL(string ttl);
+        void setNType(string n_type);
 };

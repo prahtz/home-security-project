@@ -1,6 +1,7 @@
 #include "RCSim.h"
 
 int var = 1;
+
 int RCSwitch::getReceivedValue() {
     usleep(3000000);
     int result = var;

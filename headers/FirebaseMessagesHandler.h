@@ -7,16 +7,17 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 
-#include "FirebaseNotification.h"
+#include "FirebaseMessage.h"
 
 using namespace curlpp::options;
 using namespace std;
 
 class FirebaseMessagesHandler {
     private:
-        list<FirebaseMessage*> messagesBuffer;
+        static list<FirebaseMessage*> messagesBuffer;
     public:
+        
         FirebaseMessagesHandler();
         void startService();
-        void addMessage(FirebaseMessage* message);
+        static void addMessage(FirebaseMessage* message);
 };

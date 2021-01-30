@@ -4,6 +4,7 @@
 #include "DoorSensor.h"
 #include "Action.h"
 #include "FirebaseMessagesHandler.h"
+#include "FirebaseNotification.h"
 #include <map>
 #include <iostream>
 #include <algorithm>

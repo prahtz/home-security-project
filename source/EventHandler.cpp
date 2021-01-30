@@ -171,3 +171,4 @@ void EventHandler::activateDefenses()
     }
     statical::newFirebaseNotification.notify_all();
 }
+

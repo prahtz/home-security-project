@@ -1,5 +1,7 @@
 #include "FirebaseMessagesHandler.h" 
 
+list<FirebaseMessage*> FirebaseMessagesHandler::messagesBuffer;
+
 FirebaseMessagesHandler::FirebaseMessagesHandler() {
 
 }
