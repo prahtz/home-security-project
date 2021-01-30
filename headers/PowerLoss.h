@@ -15,15 +15,15 @@
 
 
 static std::atomic<bool> call;
-static int PIN;
-static int LOW = 1;
+static const int PIN = 22;
+static const int LOW_VALUE = 1;
 static void callback() {
     unsigned int sleep = 3000;
     int r = digitalRead(PIN);
-    if(r == LOW) {
+    if(r == LOW_VALUE) {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
         r = digitalRead(PIN);
-        if(r == LOW) {
+        if(r == LOW_VALUE) {
             std::cout << "testing" << std::endl;
         }
     }
@@ -31,7 +31,6 @@ static void callback() {
 
 class PowerLoss {
     private:
-        static const int PIN = 22;
     public:
         PowerLoss(){};
         static void test();
