@@ -10,6 +10,7 @@ class FirebaseNotification: public FirebaseMessage{
     private:
         string title = "";
         string body = "";
+        string ttl = "120";
         string token = "APA91bFyPthniy3dbDzXVPAexa26XXSqcfL00xHY3_TNdoJELgADQ_Jw7BHieac7mIVY70duFaPhU-KkWHlTaWZ7ENmoAUevDxk-tw2oe0WdoOMG_-IPf6g";
     public:
         FirebaseNotification();
@@ -22,4 +23,5 @@ class FirebaseNotification: public FirebaseMessage{
         void setTitle(string title);
         void setBody(string body);
         void setToken(string token);
+        void setTTL(string ttl);
 };

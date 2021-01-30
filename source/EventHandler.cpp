@@ -163,7 +163,7 @@ void EventHandler::activateDefenses()
         transmitter->mTransmit.unlock();
     
     for(string token : *tokenList) {
-        FirebasePayload* notification = new FirebasePayload();
+        FirebaseNotification* notification = new FirebaseNotification();
         notification->setTitle("ALLARME ATTIVO");
         notification->setBody("Intrusione rilevata!");
         notification->setToken(token);

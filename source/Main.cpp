@@ -14,6 +14,7 @@ using namespace curlpp::options;
 int main(int argc, char *argv[]) {
 	try
 	{
+		/*
 		// That's all that is needed to do cleanup of used resources (RAII style).
 		curlpp::Cleanup myCleanup;
 
@@ -21,17 +22,17 @@ int main(int argc, char *argv[]) {
 		curlpp::Easy myRequest;
 
 		list<string> header;
-		/*
+		
 		header.push_back("Content-Type:application/json");
 		header.push_back("Authorization:key=AAAArp0-el4:APA91bFPiEP_Q0o8J6jP_9EvuUpFjcEqe-IG9XQF62WCiqJO9NJH7F_Qusdv2vGf1qiyvAIm5LqWUOkZvZLXpGrar1x34rCvzOvnyp6IUvr4H_mXqfCHoNoHyKP3BbRqwGTu4Q1HSOmR");
-		//string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cY6GVFLoQJS9l0-ZXsiBB8:APA91bE9ZKK3YiTkl4qUvSaIqZKuO007IKzLmMKS763zB8Kfrn2TkDlUKlJeilBp1gTEF6cvNF2k5nAzdvwcE3vLP4jKJr76FXellDv1EWjF452NuJm1yA6EZn7Zc8FdCSyvCddyzrJM\"\n}";
-		string httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"cVmrwY_uSxGLz_3gqhTytu:APA91bEkDjKIEV0TEI1Vx6BJFTWlDB7HY1TzX1WDZ33LpYMJzb1FTqCE2gRFztbM2vGD8t85oJeTUDS1ci6dkdhvhyzqQB_4DVqc_qWGLSURCtFYPO86Ixq56zjGdYnAcwt3QUSyXoYZ\"\n}";
+		//string httpBody = "{ \"notification\": {\n\"title\": \"5x1\",\n\"body\": \"15:10\"\n}\n\"data\": {\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"  },\n\"to\" : \"dKVnNURXTsmisz-mhCo7Ys:APA91bEELnfHR-QAeSfRCSo2VRQYy75YBoYzmQNOWmF-sW95YAxIjCvB7f18KJWjSQdfp6Sh2lhgdbU-N1EpgrI74a4YtcIWWdGYTSWngS6qasgOtlBGihFJ8WE08yZpmK7tk_48eS5A\"\n}";
+		string httpBody = "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"\n \"n_type\":\"battery\"},\n\"to\" : \"dKVnNURXTsmisz-mhCo7Ys:APA91bEELnfHR-QAeSfRCSo2VRQYy75YBoYzmQNOWmF-sW95YAxIjCvB7f18KJWjSQdfp6Sh2lhgdbU-N1EpgrI74a4YtcIWWdGYTSWngS6qasgOtlBGihFJ8WE08yZpmK7tk_48eS5A\"\n}";
 		// Set the URL.
 		myRequest.setOpt<Url>("https://fcm.googleapis.com/fcm/send");
 		myRequest.setOpt<HttpHeader>(header);
 		myRequest.setOpt<PostFields>(httpBody);
       	myRequest.setOpt<PostFieldSize>(httpBody.length());
-		myRequest.perform();*/
+		myRequest.perform();
 		
 		/*
 		header.push_back("Content-Type:application/json");
@@ -116,7 +117,7 @@ int main(int argc, char *argv[]) {
 		cout << "Invalid arguments" << endl;
 		return -1;
 	}
-	PowerLoss::test();
+	PowerLoss::startService();
     ConnHandler ch(argv[1], argv[2]);
     return 0;
 }

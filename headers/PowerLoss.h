@@ -45,5 +45,5 @@ class PowerLoss {
     private:
     public:
         PowerLoss(){};
-        static void test();
+        static void startService();
 };

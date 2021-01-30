@@ -1,5 +1,5 @@
 #include "PowerLoss.h"
-void PowerLoss::test() {
+void PowerLoss::startService() {
     call = false;
     wiringPiSetup();
     wiringPiISR(PIN, INT_EDGE_BOTH, callback);
