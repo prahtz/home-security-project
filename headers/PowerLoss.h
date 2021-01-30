@@ -15,13 +15,15 @@
 
 
 static std::atomic<bool> call;
+static int PIN;
+static int LOW = 1;
 static void callback() {
     unsigned int sleep = 3000;
-    int r = digitalRead(22);
-    if(r == 0) {
+    int r = digitalRead(PIN);
+    if(r == LOW) {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
-        r = digitalRead(22);
-        if(r == 0) {
+        r = digitalRead(PIN);
+        if(r == LOW) {
             std::cout << "testing" << std::endl;
         }
     }
