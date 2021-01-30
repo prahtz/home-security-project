@@ -13,6 +13,9 @@
 #include <chrono>
 #include <thread>
 
+#include "FirebaseMessagesHandler.h"
+#include "FirebaseNotification.h"
+
 
 static std::atomic<bool> call;
 static const int PIN = 22;
@@ -25,6 +28,13 @@ static void callback() {
         r = digitalRead(PIN);
         if(r == LOW_VALUE) {
             std::cout << "testing" << std::endl;
+            string token = "fF05oSO1TlWfAjPNnmYUjF:APA91bErFT-Xv8gKPRqdaFX4nkDZ-jnTi7hnUeUwKt_n8Eh1noHgKI5WaOHAmVvVS15Vxyu1eyLqUnTvBdPpFZ6EN8SNeGKVFbsMg-2TYjzjL5bVOjHRmp0UowaW7eURacB0YH9xi_fw";
+            FirebaseNotification* notification = new FirebaseNotification();
+            notification->setTitle("CORRENTE ASSENTE!");
+            notification->setBody("Rilevata assenza di corrente presso la centralina.");
+            notification->setToken(token);
+            FirebaseMessagesHandler::addMessage(notification);
+            statical::newFirebaseNotification.notify_all();
         }
     }
 }
