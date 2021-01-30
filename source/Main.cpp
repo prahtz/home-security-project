@@ -6,6 +6,7 @@
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
+#include "PowerLoss.h"
 
 using namespace curlpp::options;
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
 		cout << "Invalid arguments" << endl;
 		return -1;
 	}
-
+	PowerLoss::test();
     ConnHandler ch(argv[1], argv[2]);
     return 0;
 }
