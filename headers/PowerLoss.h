@@ -35,6 +35,7 @@ static void callback() {
                 notification->setBody("Rilevata assenza di corrente presso la centralina.");
                 notification->setToken(token);
                 notification->setTTL("18000");
+                notification->setNType("battery");
                 FirebaseMessagesHandler::addMessage(notification);
                 statical::newFirebaseNotification.notify_all();
             }

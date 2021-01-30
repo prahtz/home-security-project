@@ -18,7 +18,7 @@ string FirebaseNotification::getTTL() {
 
 string FirebaseNotification::getHttpBody() {
     //return "{ \"notification\": {\n\"title\": \"" + title + "\",\n\"body\": \"" + body +"\"\n},\n\"to\" : \"" + token + "\"\n}";
-    return "{ \"priority\": \"high\",\n\"data\": {\n\"click_action\": \n \"FLUTTER_NOTIFICATION_CLICK\"},  \"android\": { \"time_to_live\": \"" + ttl + "\" },\n\"to\" : \"" + token + "\"\n}";
+    return "{ \"priority\": \"high\",\n\"data\": {\n\"n_type\": \"" + n_type + "\"\n\"click_action\": \"FLUTTER_NOTIFICATION_CLICK\"},  \"android\": { \"time_to_live\": \"" + ttl + "\" },\n\"to\" : \"" + token + "\"\n}";
 }
 
 void FirebaseNotification::setTitle(string title) {
@@ -35,4 +35,8 @@ void FirebaseNotification::setToken(string token) {
 
 void FirebaseNotification::setTTL(string ttl) {
     this->ttl = ttl;
+}
+
+void FirebaseNotification::setNType(string n_type) {
+    this->n_type = n_type;
 }
