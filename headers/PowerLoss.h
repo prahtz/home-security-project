@@ -7,6 +7,7 @@
 #endif
 
 #include <atomic>
+#include <iostream>
 
 static std::atomic<bool> call;
 
