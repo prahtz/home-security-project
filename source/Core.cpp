@@ -35,6 +35,8 @@ void Core::setupKnownSensors()
                 getline(streamString, field, ';');
                 ds->isEnabled((bool)stoi(field));
                 getline(streamString, field, ';');
+                ds->isCharged((bool)stoi(field));
+                getline(streamString, field, ';');
                 ds->setOpenCode(stoi(field));
                 getline(streamString, field, ';');
                 ds->setCloseCode(stoi(field));

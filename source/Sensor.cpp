@@ -46,6 +46,6 @@ void Sensor::writeToFile(ofstream &out) {
 }
 
 string Sensor::getSensorInfo() {
-    return to_string(sensorID) + SEPARATOR + to_string(sensorState) + SEPARATOR + to_string(enabled);
+    return to_string(sensorID) + SEPARATOR + to_string(sensorState) + SEPARATOR + to_string(enabled) + SEPARATOR + to_string(charged);
 }
 
