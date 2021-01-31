@@ -11,8 +11,13 @@ Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessag
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
 };
 
-//TEST
-//TODO
+void Core::updateCodeMap(DoorSensor *ds)
+{
+    codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
+    codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
+    codeMap[ds->getBatteryLowCode()] = new pair<Action, Sensor *>(BATTERY_LOW, ds);
+}
+
 void Core::setupKnownSensors()
 {
     ifstream readingFile(KNOWN_PATH);
@@ -42,9 +47,9 @@ void Core::setupKnownSensors()
                 ds->setCloseCode(stoi(field));
                 getline(streamString, field);
                 ds->setSensorName(field);
+                ds->setBatteryLowCode(ds->getOpenCode() - BATTERY_LOW_SHIFT);
                 knownSensorList.push_back(ds);
-                codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
-                codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
+                updateCodeMap(ds);
                 break;
             }
         }
@@ -57,7 +62,8 @@ void Core::setupKnownSensors()
     }
 };
 
-void Core::setupTokenList() {
+void Core::setupTokenList()
+{
     ifstream readingFile(TOKEN_PATH);
     string line;
     if (readingFile.is_open())
@@ -113,7 +119,7 @@ int Core::getNewSensorID()
     return (*(--knownSensorList.end()))->getSensorID() + 1;
 }
 
-void Core::registerNewDoorSensor(TCPComm* tcpComm)
+void Core::registerNewDoorSensor(TCPComm *tcpComm)
 {
     DoorSensor *ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
@@ -153,7 +159,7 @@ void Core::registerNewDoorSensor(TCPComm* tcpComm)
     tcpComm->sendMessage(message::REGISTER_SUCCESS);
 }
 
-void Core::registerCloseCode(TCPComm* tcpComm, DoorSensor *ds)
+void Core::registerCloseCode(TCPComm *tcpComm, DoorSensor *ds)
 {
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(statical::mSharedCondition);
@@ -163,7 +169,7 @@ void Core::registerCloseCode(TCPComm* tcpComm, DoorSensor *ds)
 
     if (tcpComm->isAvailable())
     {
-        
+
         if (tcpComm->getMessage() == message::ABORT)
             throw AbortException("Register sensor abort, first step.");
         throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, first step.");
@@ -178,7 +184,7 @@ void Core::registerCloseCode(TCPComm* tcpComm, DoorSensor *ds)
     tcpComm->sendMessage(message::NEXT_CODE);
 }
 
-void Core::registerOpenCode(TCPComm* tcpComm, DoorSensor *ds)
+void Core::registerOpenCode(TCPComm *tcpComm, DoorSensor *ds)
 {
     bool go = true;
     code openCode;
@@ -189,7 +195,8 @@ void Core::registerOpenCode(TCPComm* tcpComm, DoorSensor *ds)
             return ((bool)eventHandler.codeArrived) || tcpComm->isAvailable();
         });
 
-        if (tcpComm->isAvailable()) {
+        if (tcpComm->isAvailable())
+        {
             string m = tcpComm->getMessage();
             if (m == message::ABORT)
                 throw AbortException("Register sensor abort, second step.");
@@ -210,7 +217,7 @@ void Core::registerOpenCode(TCPComm* tcpComm, DoorSensor *ds)
     eventHandler.registerCode = false;
 }
 
-void Core::registerSensorName(TCPComm* tcpComm, DoorSensor *ds)
+void Core::registerSensorName(TCPComm *tcpComm, DoorSensor *ds)
 {
     unique_lock<mutex> registerLock(statical::mSharedCondition);
     bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
@@ -232,14 +239,13 @@ void Core::registerSensorName(TCPComm* tcpComm, DoorSensor *ds)
                 ds->setSensorName(sensorName);
                 ds->setBatteryLowCode(ds->getOpenCode() - BATTERY_LOW_SHIFT);
                 ds->isEnabled(true);
+                ds->isCharged(true);
                 eventHandler.mSensorList.lock();
                 addSensorToList(ds);
                 eventHandler.mSensorList.unlock();
                 eventHandler.mFile.lock();
                 ofstream out(KNOWN_PATH, ios::app);
-                codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
-                codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
-                codeMap[ds->getBatteryLowCode()] = new pair<Action, Sensor*>(BATTERY_LOW, ds);
+                updateCodeMap(ds);
                 ds->writeToFile(out);
                 out.close();
                 eventHandler.mFile.unlock();
@@ -258,7 +264,7 @@ void Core::registerSensorName(TCPComm* tcpComm, DoorSensor *ds)
         throw TimeOutException("Register sensor timed out, third step");
 }
 
-void Core::activateAlarm(TCPComm* tcpComm)
+void Core::activateAlarm(TCPComm *tcpComm)
 {
     if (isAlarmReady() && !eventHandler.alarmActivated && !eventHandler.defensesActivated)
     {
@@ -269,7 +275,7 @@ void Core::activateAlarm(TCPComm* tcpComm)
         tcpComm->sendMessage(message::ACTIVATION_FAILED);
 }
 
-void Core::deactivateAlarm(TCPComm* tcpComm)
+void Core::deactivateAlarm(TCPComm *tcpComm)
 {
     if (eventHandler.alarmActivated || eventHandler.defensesActivated)
     {
@@ -290,7 +296,7 @@ void Core::deactivateAlarm(TCPComm* tcpComm)
     }
 }
 
-void Core::sensorList(TCPComm* tcpComm)
+void Core::sensorList(TCPComm *tcpComm)
 {
     eventHandler.mSensorList.lock();
     for (Sensor *s : knownSensorList)
@@ -299,7 +305,7 @@ void Core::sensorList(TCPComm* tcpComm)
     tcpComm->sendMessage(message::END_SENSOR_LIST);
 }
 
-void Core::deactivateSensor(TCPComm* tcpComm, string message)
+void Core::deactivateSensor(TCPComm *tcpComm, string message)
 {
     int sensorID = stoi(message.substr(0, message.length() - message::DEACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
@@ -330,7 +336,7 @@ void Core::deactivateSensor(TCPComm* tcpComm, string message)
     eventHandler.mSensorList.unlock();
 }
 
-void Core::activateSensor(TCPComm* tcpComm, string message)
+void Core::activateSensor(TCPComm *tcpComm, string message)
 {
     int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
@@ -365,7 +371,7 @@ void Core::activateSensor(TCPComm* tcpComm, string message)
     eventHandler.mSensorList.unlock();
 }
 
-void Core::removeSensor(TCPComm* tcpComm, string message)
+void Core::removeSensor(TCPComm *tcpComm, string message)
 {
     int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
@@ -394,7 +400,8 @@ void Core::removeSensor(TCPComm* tcpComm, string message)
     eventHandler.mSensorList.unlock();
 }
 
-void Core::updateBattery(TCPComm* tcpComm, string message) {
+void Core::updateBattery(TCPComm *tcpComm, string message)
+{
     int sensorID = stoi(message.substr(0, message.length() - message::UPDATE_BATTERY.length() - SEPARATOR.length()));
     eventHandler.mSensorList.lock();
     list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
@@ -403,12 +410,14 @@ void Core::updateBattery(TCPComm* tcpComm, string message) {
     {
         if (it != knownSensorList.end())
         {
-            if(!(*it)->isCharged()) {
+            if (!(*it)->isCharged())
+            {
                 (*it)->isCharged(true);
                 eventHandler.updateKnownFile();
                 tcpComm->sendMessage(message::UPDATE_BATTERY_SUCCESS);
             }
-            else {
+            else
+            {
                 throw SensorChargedException("Sensore non scarico!");
             }
         }
@@ -425,11 +434,13 @@ void Core::updateBattery(TCPComm* tcpComm, string message) {
     eventHandler.mSensorList.unlock();
 }
 
-void Core::handleFirebaseToken(string token) {
-    if(std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end()) {
-        FirebaseOperation* operation = new FirebaseOperation("add");
+void Core::handleFirebaseToken(string token)
+{
+    if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
+    {
+        FirebaseOperation *operation = new FirebaseOperation("add");
         operation->addRegID(token);
-        cout << "Adding Token: " << token <<endl;
+        cout << "Adding Token: " << token << endl;
         firebaseMessagesHandler.addMessage(operation);
         statical::newFirebaseNotification.notify_all();
         tokenList.push_back(token);
@@ -437,7 +448,8 @@ void Core::handleFirebaseToken(string token) {
     }
 }
 
-void Core::updateTokenList() {
+void Core::updateTokenList()
+{
     ofstream out(TOKEN_PATH, ios::trunc);
     for (string s : tokenList)
         out << s << endl;

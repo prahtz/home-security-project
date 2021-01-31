@@ -36,6 +36,7 @@ class Core{
         void setupKnownSensors();
         void setupTokenList();
         void updateTokenList();
+        void updateCodeMap(DoorSensor* ds);
         int getNewSensorID();
 
         void registerCloseCode(TCPComm* tcpComm, DoorSensor *ds);
