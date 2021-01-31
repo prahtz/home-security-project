@@ -118,6 +118,7 @@ void Core::registerNewDoorSensor(TCPComm* tcpComm)
     DoorSensor *ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
     ds->setSensorState(OPENED);
+    ds->isCharged(true);
     try
     {
         registerCloseCode(tcpComm, ds);
