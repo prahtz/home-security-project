@@ -50,6 +50,7 @@ class Core{
         void activateAlarm(TCPComm* tcpComm);
         void deactivateAlarm(TCPComm* tcpComm);
         void sensorList(TCPComm* tcpComm);
+        void updateBattery(TCPComm* tcpComm, string message);
         void removeSensor(TCPComm* tcpComm, string message);
         void deactivateSensor(TCPComm* tcpComm, string message);
         void activateSensor(TCPComm* tcpComm, string message);

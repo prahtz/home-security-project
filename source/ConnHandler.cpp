@@ -126,6 +126,11 @@ void ConnHandler::clientThread(int clientSocket, TCPComm* tcpComm) {
             core.removeSensor(tcpComm, message);
             mCore.unlock();
         }
+        else if(message.length() >= message::UPDATE_BATTERY.length() && message.substr(message.length() - message::UPDATE_BATTERY.length(), message.length()) == message::UPDATE_BATTERY) {
+            mCore.lock();
+            core.updateBattery(tcpComm, message);
+            mCore.unlock();
+        }
         else if(message != message::FAIL) {
             mCore.lock();
             core.handleFirebaseToken(message);

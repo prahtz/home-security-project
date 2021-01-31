@@ -29,6 +29,9 @@ namespace message
     static const std::string ALARM_ACTIVE = "18";
     static const std::string ALARM_INACTIVE = "19";
     static const std::string INFO_REQUEST = "1A";
+    static const std::string UPDATE_BATTERY = "1B";
+    static const std::string UPDATE_BATTERY_SUCCESS = "1C";
+    static const std::string UPDATE_BATTERY_FAILED = "1D";
     static const std::string EOM = "//eom";
     static const std::string FAIL = "//null";
 

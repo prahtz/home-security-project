@@ -42,7 +42,7 @@ bool Sensor::isSensorReady() {
 }
 
 void Sensor::writeToFile(ofstream &out) {
-    out << sensorID << SEPARATOR << sensorState << SEPARATOR << enabled << SEPARATOR;
+    out << sensorID << SEPARATOR << sensorState << SEPARATOR << enabled << SEPARATOR << charged << SEPARATOR;
 }
 
 string Sensor::getSensorInfo() {

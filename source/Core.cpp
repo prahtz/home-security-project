@@ -391,6 +391,37 @@ void Core::removeSensor(TCPComm* tcpComm, string message)
     eventHandler.mSensorList.unlock();
 }
 
+void Core::updateBattery(TCPComm* tcpComm, string message) {
+    int sensorID = stoi(message.substr(0, message.length() - message::UPDATE_BATTERY.length() - SEPARATOR.length()));
+    eventHandler.mSensorList.lock();
+    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+
+    try
+    {
+        if (it != knownSensorList.end())
+        {
+            if(!(*it)->isCharged()) {
+                (*it)->isCharged(true);
+                eventHandler.updateKnownFile();
+                tcpComm->sendMessage(message::UPDATE_BATTERY_SUCCESS);
+            }
+            else {
+                throw SensorChargedException("Sensore non scarico!");
+            }
+        }
+        else
+        {
+            throw UpdateBatterySensorNotFoundException("Sensore non trovato!");
+        }
+    }
+    catch (UpdateBatteryException &e)
+    {
+        cout << e.what() << endl;
+        tcpComm->sendMessage(message::UPDATE_BATTERY_FAILED);
+    }
+    eventHandler.mSensorList.unlock();
+}
+
 void Core::handleFirebaseToken(string token) {
     if(std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end()) {
         FirebaseOperation* operation = new FirebaseOperation("add");
