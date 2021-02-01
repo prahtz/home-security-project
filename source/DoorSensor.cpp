@@ -28,8 +28,8 @@ void DoorSensor::setCloseCode(code closeCode) {
 void DoorSensor::setSensorName(string sensorName) {
     this->sensorName = sensorName;
 }
-void DoorSensor::setBatteryLowCode(code batteryLowCode) {
-    this->batteryLowCode = batteryLowCode;
+void DoorSensor::setBatteryLowCode(code smallerCode) {
+    this->batteryLowCode = smallerCode - BATTERY_LOW_SHIFT;
 }
 
 code DoorSensor::getOpenCode() {
