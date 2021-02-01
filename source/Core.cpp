@@ -47,7 +47,7 @@ void Core::setupKnownSensors()
                 ds->setCloseCode(stoi(field));
                 getline(streamString, field);
                 ds->setSensorName(field);
-                ds->setBatteryLowCode(ds->getOpenCode() - BATTERY_LOW_SHIFT);
+                ds->setBatteryLowCode(min(ds->getOpenCode(), ds->getCloseCode()));
                 knownSensorList.push_back(ds);
                 updateCodeMap(ds);
                 break;
@@ -237,7 +237,7 @@ void Core::registerSensorName(TCPComm *tcpComm, DoorSensor *ds)
             if (sensorName != message::FAIL && sensorName != message::ABORT && sensorName != message::STRING)
             {
                 ds->setSensorName(sensorName);
-                ds->setBatteryLowCode(ds->getOpenCode() - BATTERY_LOW_SHIFT);
+                ds->setBatteryLowCode(min(ds->getOpenCode(), ds->getCloseCode()));
                 ds->isEnabled(true);
                 ds->isCharged(true);
                 eventHandler.mSensorList.lock();
