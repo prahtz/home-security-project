@@ -1,4 +1,4 @@
-CC = g++ -std=c++17
+CC = gcc -std=c++17
 
 headers = ./headers/
 
@@ -11,7 +11,7 @@ sources = $(filter-out ./source/RCSwitch.cpp, $(wildcard ./source/*.cpp))
 libs = -lpthread -lcrypt -lcurlpp -lcurl
 else
 sources = $(filter-out ./source/RCSim.cpp, $(wildcard ./source/*.cpp))
-libs = -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev
+libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev
 CXXFLAGS = -DRPI
 endif
 
