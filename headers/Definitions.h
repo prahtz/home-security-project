@@ -5,7 +5,10 @@
 
 #define RECEIVER_PIN 25
 #define TRANSMITTER_PIN 24
-#define KNOWN_PATH "./csv/known.csv"
+
+static const std::string PATH = "./csv";
+static const std::string KNOWN_PATH = PATH + "/known.csv";
+static const std::string TOKEN_PATH = PATH + "/tokens.csv";
 
 typedef unsigned long code;
 static const int BATTERY_LOW_SHIFT = 4;

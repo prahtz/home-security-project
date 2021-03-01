@@ -22,7 +22,7 @@ static std::atomic<bool> call;
 static const int PIN = 22;
 static const int LOW_VALUE = 1;
 static void callback() {
-    unsigned int sleep = 3000;
+    unsigned int sleep = 10000;
     int r = digitalRead(PIN);
     if(r == LOW_VALUE) {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep));

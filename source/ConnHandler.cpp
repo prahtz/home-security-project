@@ -8,7 +8,12 @@ ConnHandler::ConnHandler() {
 ConnHandler::ConnHandler(string lan_IP, string port) {
     this->lan_IP = lan_IP;
     this->port = port;
+    try{
     setupServerSocket();
+    }
+    catch(exception e) {
+        std::cout << e.what() << std::endl;
+    }
     startClientServerComunication();
 }
 

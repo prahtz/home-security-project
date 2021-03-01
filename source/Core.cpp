@@ -20,6 +20,7 @@ void Core::updateCodeMap(DoorSensor *ds)
 
 void Core::setupKnownSensors()
 {
+    std::filesystem::create_directory(PATH);
     ifstream readingFile(KNOWN_PATH);
     string line;
     if (readingFile.is_open())
