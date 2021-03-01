@@ -8,7 +8,7 @@ output = hsp
 
 ifeq ($(MAKECMDGOALS), linux)
 sources = $(filter-out ./source/RCSwitch.cpp, $(wildcard ./source/*.cpp))
-libs = -lpthread -lcrypt -lcurlpp -lcurl
+libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl
 else
 sources = $(filter-out ./source/RCSim.cpp, $(wildcard ./source/*.cpp))
 libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev
