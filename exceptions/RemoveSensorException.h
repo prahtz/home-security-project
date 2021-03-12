@@ -13,5 +13,7 @@ class RemoveSensorException : runtime_error{
 
 class SensorNotFoundException : public RemoveSensorException{
     public:
-    SensorNotFoundException(const char* what) : RemoveSensorException(what) {}
+    SensorNotFoundException(const char* what) : RemoveSensorException(what) {
+        Logger::log("EXCEPTION - Sensor not found while removing sensor");
+    }
 };

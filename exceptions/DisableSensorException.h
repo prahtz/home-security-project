@@ -13,10 +13,14 @@ class DisableSensorException : runtime_error{
 
 class EnabledSensorNotFoundException : public DisableSensorException{
     public:
-    EnabledSensorNotFoundException(const char* what) : DisableSensorException(what) {}
+    EnabledSensorNotFoundException(const char* what) : DisableSensorException(what) {
+        Logger::log("EXCEPTION - Sensor not found during sensor disabling");
+    }
 };
 
 class SensorAlreadyDisabledException : public DisableSensorException{
     public:
-    SensorAlreadyDisabledException(const char* what) : DisableSensorException(what) {}
+    SensorAlreadyDisabledException(const char* what) : DisableSensorException(what) {
+        Logger::log("EXCEPTION - Sensor already disabled");
+    }
 };

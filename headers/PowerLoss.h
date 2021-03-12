@@ -37,6 +37,7 @@ static void callback() {
                 notification->setTTL("18000");
                 notification->setNType("battery");
                 FirebaseMessagesHandler::addMessage(notification);
+                Logger::log("Power loss detected");
                 statical::newFirebaseNotification.notify_all();
             }
         }

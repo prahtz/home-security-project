@@ -3,3 +3,4 @@
 #include "EnableSensorException.h"
 #include "RemoveSensorException.h"
 #include "UpdateBatteryException.h"
+#include "Logger.h"

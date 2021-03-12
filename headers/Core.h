@@ -17,6 +17,7 @@
 #include "TCPComm.h"
 #include "FirebaseOperation.h"
 #include "ClientUpdater.h"
+#include "Logger.h"
 
 using namespace std;
 

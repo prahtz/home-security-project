@@ -5,6 +5,7 @@
 #include "Action.h"
 #include "FirebaseMessagesHandler.h"
 #include "FirebaseNotification.h"
+#include "Logger.h"
 #include <map>
 #include <iostream>
 #include <algorithm>

@@ -13,10 +13,14 @@ class UpdateBatteryException : runtime_error{
 
 class SensorChargedException : public UpdateBatteryException{
     public:
-    SensorChargedException(const char* what) : UpdateBatteryException(what) {}
+    SensorChargedException(const char* what) : UpdateBatteryException(what) {
+        Logger::log("EXCEPTION - Sensor already charged");
+    }
 };
 
 class UpdateBatterySensorNotFoundException : public UpdateBatteryException{
     public:
-    UpdateBatterySensorNotFoundException(const char* what) : UpdateBatteryException(what) {}
+    UpdateBatterySensorNotFoundException(const char* what) : UpdateBatteryException(what) {
+        Logger::log("EXCEPTION - Sensor not found while updating battery charge");
+    }
 };

@@ -3,6 +3,7 @@ list<string> Core::tokenList;
 
 Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &tokenList, &codeMap)
 {
+    Logger::log("Service started");
     setupKnownSensors();
     setupTokenList();
     receiverThread = thread(&Receiver::startReceiving, &receiver);
@@ -122,6 +123,7 @@ int Core::getNewSensorID()
 
 void Core::registerNewDoorSensor(TCPComm *tcpComm)
 {
+    Logger::log("Registering new door sensor...");
     DoorSensor *ds = new DoorSensor();
     ds->setSensorID(getNewSensorID());
     ds->setSensorState(OPENED);
@@ -156,7 +158,8 @@ void Core::registerNewDoorSensor(TCPComm *tcpComm)
         delete ds;
         return;
     }
-
+    Logger::log(ds->getSensorName() + " sensor registered with open code " 
+        + to_string(ds->getOpenCode()) + " and close code " + to_string(ds->getCloseCode()));
     tcpComm->sendMessage(message::REGISTER_SUCCESS);
 }
 
@@ -271,9 +274,12 @@ void Core::activateAlarm(TCPComm *tcpComm)
     {
         eventHandler.alarmActivated = true;
         tcpComm->sendMessage(message::ACTIVATION_SUCCESS);
+        Logger::log("Alarm activated");
     }
-    else
+    else {
         tcpComm->sendMessage(message::ACTIVATION_FAILED);
+        Logger::log("Alarm activation failed");
+    }
 }
 
 void Core::deactivateAlarm(TCPComm *tcpComm)
@@ -290,10 +296,12 @@ void Core::deactivateAlarm(TCPComm *tcpComm)
             eventHandler.defensesActivated = false;
         }
         tcpComm->sendMessage(message::DEACTIVATION_SUCCESS);
+        Logger::log("Alarm deactivated");
     }
     else
     {
         tcpComm->sendMessage(message::DEACTIVATION_FAILED);
+        Logger::log("Alarm deactivation failed");
     }
 }
 
@@ -320,6 +328,7 @@ void Core::deactivateSensor(TCPComm *tcpComm, string message)
                 (*it)->isEnabled(false);
                 eventHandler.updateKnownFile();
                 tcpComm->sendMessage(message::DEACTIVATE_SENSOR_SUCCESS);
+                Logger::log((*it)->getSensorInfo() + " deactivated");
             }
             else
                 throw SensorAlreadyDisabledException("Sensore già disabilitato!");
@@ -355,6 +364,7 @@ void Core::activateSensor(TCPComm *tcpComm, string message)
                 (*it)->isEnabled(true);
                 eventHandler.updateKnownFile();
                 tcpComm->sendMessage(message::ACTIVATE_SENSOR_SUCCESS);
+                Logger::log((*it)->getSensorInfo() + " reactivated");
             }
             else
                 throw SensorAlreadyEnabledException("Sensore già abilitato!");
@@ -387,6 +397,7 @@ void Core::removeSensor(TCPComm *tcpComm, string message)
             knownSensorList.erase(it);
             eventHandler.updateKnownFile();
             tcpComm->sendMessage(message::REMOVE_SENSOR_SUCCESS);
+            Logger::log((*it)->getSensorInfo() + " sensor removed");
         }
         else
         {
@@ -416,6 +427,7 @@ void Core::updateBattery(TCPComm *tcpComm, string message)
                 (*it)->isCharged(true);
                 eventHandler.updateKnownFile();
                 tcpComm->sendMessage(message::UPDATE_BATTERY_SUCCESS);
+                Logger::log((*it)->getSensorInfo() + " sensor recharged");
             }
             else
             {
