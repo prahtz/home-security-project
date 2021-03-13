@@ -70,10 +70,11 @@ void EventHandler::startListening()
 void EventHandler::onSensorOpen(Sensor *sensor)
 {
     mSensorList.lock();
-    if (alarmActivated && sensor->isEnabled() && !defensesActivated)
+    if (alarmActivated && sensor->isEnabled() && !defensesActivated) 
         activateDefenses();
     sensor->setSensorState(OPENED);
     updateKnownFile();
+    Logger::log(sensor->getSensorInfo() + ": received open code");
     mSensorList.unlock();
 }
 
@@ -82,6 +83,7 @@ void EventHandler::onSensorClose(Sensor *sensor)
     mSensorList.lock();
     sensor->setSensorState(CLOSED);
     updateKnownFile();
+    Logger::log(sensor->getSensorInfo() + ": received close code");
     mSensorList.unlock();
 }
 
@@ -90,6 +92,7 @@ void EventHandler::onSensorBatteryLow(Sensor *sensor)
     mSensorList.lock();
     sensor->isCharged(false);
     updateKnownFile();
+    Logger::log(sensor->getSensorInfo() + ": received battery low code");
     mSensorList.unlock();
 }
 
@@ -97,6 +100,7 @@ void EventHandler::onAckActivateCode() {
     transmitter->mTransmit.lock();
     if(transmitter->getTransmittingCode() == activateSirenCode) {
         transmitter->isAckReceived(true);
+        Logger::log("ACK message on the activate siren code received");
         transmitter->mTransmit.unlock();
         transmitter->startTransmitting.notify_all();
     }
@@ -108,6 +112,7 @@ void EventHandler::onAckDeactivateCode() {
     transmitter->mTransmit.lock();
     if(transmitter->getTransmittingCode() == deactivateSirenCode) {
         transmitter->isAckReceived(true);
+        Logger::log("ACK message on the deactivate siren code received");
         transmitter->mTransmit.unlock();
         transmitter->startTransmitting.notify_all();
     }
@@ -119,6 +124,7 @@ void EventHandler::onTamperActiveCode() {
     transmitter->mTransmit.lock();
     defensesActivated = true;
     transmitter->addTransmittingCode(ackControlUnitCode, SEND_ACK);
+    Logger::log("Tamper code received, sending ACK...");
     transmitter->mTransmit.unlock();
     transmitter->startTransmitting.notify_all();
 }
@@ -126,6 +132,7 @@ void EventHandler::onTamperActiveCode() {
 void EventHandler::onUnknownCode(code codeReceived) {
     cout << "EventHandler - codeReceived: " << codeReceived << endl;
     cout << "EventHandler - registerCode?: " << registerCode << endl;
+    Logger::log("Unknown code received: " + to_string(codeReceived));
     if (registerCode)
     {
         newCode = codeReceived;
@@ -152,11 +159,13 @@ void EventHandler::updateKnownFile()
 
 void EventHandler::activateDefenses()
 {
+    Logger::log("Activating defenses!");
     defensesActivated = true;
     transmitter->mTransmit.lock();
     if(transmitter->getTransmittingCode() != activateSirenCode) {
         transmitter->addTransmittingCode(activateSirenCode, WAIT_FOR_ACK);
         transmitter->mTransmit.unlock();
+        Logger::log("Starting transmission of activate siren code");
         transmitter->startTransmitting.notify_all();
     }
     else

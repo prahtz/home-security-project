@@ -13,15 +13,21 @@ class EnableSensorException : runtime_error{
 
 class DisabledSensorNotFoundException : public EnableSensorException{
     public:
-    DisabledSensorNotFoundException(const char* what) : EnableSensorException(what) {}
+    DisabledSensorNotFoundException(const char* what) : EnableSensorException(what) {
+        Logger::log("EXCEPTION - Sensor not found during sensor enabling");
+    }
 };
 
 class SensorAlreadyEnabledException : public EnableSensorException{
     public:
-    SensorAlreadyEnabledException(const char* what) : EnableSensorException(what) {}
+    SensorAlreadyEnabledException(const char* what) : EnableSensorException(what) {
+        Logger::log("EXCEPTION - Sensor already enabled");
+    }
 };
 
 class SensorOpenedException : public EnableSensorException{
     public:
-    SensorOpenedException(const char* what) : EnableSensorException(what) {}
+    SensorOpenedException(const char* what) : EnableSensorException(what) {
+        Logger::log("EXCEPTION - Sensor is open, can\'t enable it while alarm is active");
+    }
 };

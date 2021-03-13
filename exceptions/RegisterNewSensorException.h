@@ -13,18 +13,24 @@ class RegisterNewSensorException : runtime_error{
 
 class UnexpectedMessageException : public RegisterNewSensorException{
     public:
-    UnexpectedMessageException(const char* what) : RegisterNewSensorException(what) {}
+    UnexpectedMessageException(const char* what) : RegisterNewSensorException(what) {
+        Logger::log("EXCEPTION - Message unexpected during sensor registering");
+    }
 };
 
 class TimeOutException : public RegisterNewSensorException{
     public:
-    TimeOutException(const char* what) : RegisterNewSensorException(what) {}
+    TimeOutException(const char* what) : RegisterNewSensorException(what) {
+        Logger::log("EXCEPTION - Time expired during sensor registering");
+    }
 };
 
 
 class AbortException : public RegisterNewSensorException{
     public:
-    AbortException(const char* what) : RegisterNewSensorException(what) {}
+    AbortException(const char* what) : RegisterNewSensorException(what) {
+        Logger::log("EXCEPTION - Abort received during sensor registering");
+    }
 };
 
 

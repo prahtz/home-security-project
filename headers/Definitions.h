@@ -9,6 +9,7 @@
 static const std::string PATH = "./csv";
 static const std::string KNOWN_PATH = PATH + "/known.csv";
 static const std::string TOKEN_PATH = PATH + "/tokens.csv";
+static const std::string LOG_PATH = "./log";
 
 typedef unsigned long code;
 static const int BATTERY_LOW_SHIFT = 4;

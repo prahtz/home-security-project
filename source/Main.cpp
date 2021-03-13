@@ -7,6 +7,7 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 #include "PowerLoss.h"
+#include "TimeHandler.h"
 
 using namespace curlpp::options;
 
