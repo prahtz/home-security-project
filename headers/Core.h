@@ -61,4 +61,6 @@ class Core{
         void registerNewDoorSensor(TCPComm* tcpComm);
         void writeSensorToFile(Sensor* s);
         void handleFirebaseToken(string token);
+        void setupNewPIN(TCPComm* tcpComm);
+        void pinRequest(TCPComm* tcpComm);
 };

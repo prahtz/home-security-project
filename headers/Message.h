@@ -32,6 +32,12 @@ namespace message
     static const std::string UPDATE_BATTERY = "1B";
     static const std::string UPDATE_BATTERY_SUCCESS = "1C";
     static const std::string UPDATE_BATTERY_FAILED = "1D";
+    static const std::string UPDATE_PIN = "1E";
+    static const std::string UPDATE_PIN_SUCCESS = "1F";
+    static const std::string UPDATE_PIN_FAILED = "20";
+    static const std::string PIN_REQUEST = "21";
+    static const std::string PIN_REQUEST_SUCCESS = "22";
+    static const std::string PIN_REQUEST_FAILED = "23";
     static const std::string EOM = "//eom";
     static const std::string FAIL = "//null";
 

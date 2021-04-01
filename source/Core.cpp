@@ -158,8 +158,7 @@ void Core::registerNewDoorSensor(TCPComm *tcpComm)
         delete ds;
         return;
     }
-    Logger::log(ds->getSensorName() + " sensor registered with open code " 
-        + to_string(ds->getOpenCode()) + " and close code " + to_string(ds->getCloseCode()));
+    Logger::log(ds->getSensorName() + " sensor registered with open code " + to_string(ds->getOpenCode()) + " and close code " + to_string(ds->getCloseCode()));
     tcpComm->sendMessage(message::REGISTER_SUCCESS);
 }
 
@@ -173,7 +172,6 @@ void Core::registerCloseCode(TCPComm *tcpComm, DoorSensor *ds)
 
     if (tcpComm->isAvailable())
     {
-
         if (tcpComm->getMessage() == message::ABORT)
             throw AbortException("Register sensor abort, first step.");
         throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, first step.");
@@ -276,7 +274,8 @@ void Core::activateAlarm(TCPComm *tcpComm)
         tcpComm->sendMessage(message::ACTIVATION_SUCCESS);
         Logger::log("Alarm activated");
     }
-    else {
+    else
+    {
         tcpComm->sendMessage(message::ACTIVATION_FAILED);
         Logger::log("Alarm activation failed");
     }
@@ -467,4 +466,50 @@ void Core::updateTokenList()
     for (string s : tokenList)
         out << s << endl;
     out.close();
+}
+
+void Core::setupNewPIN(TCPComm *tcpComm)
+{
+    try
+    {
+        if (!tcpComm->isAvailable())
+        {
+            unique_lock<mutex> authLock(statical::mSharedCondition);
+            bool notTimedOut = statical::sharedCondition.wait_for(authLock, chrono::seconds(30), [this, &tcpComm] {
+                return tcpComm->isAvailable();
+            });
+            if (!tcpComm->isAvailable())
+            {
+                throw PinTimeOutException("PIN non ricevuto in tempo");
+            }
+        }
+
+        string newPin = tcpComm->getMessage();
+        ofstream out(PIN_PATH, ios::trunc);
+        out << newPin << endl;
+        out.close();
+        tcpComm->sendMessage(message::UPDATE_PIN_SUCCESS);
+    }
+    catch(PinTimeOutException e) {
+        cout << e.what() << endl;
+        tcpComm->sendMessage(message::UPDATE_PIN_FAILED);
+    }
+}
+
+void Core::pinRequest(TCPComm* tcpComm) {
+    try {
+        if(std::filesystem::exists(PIN_PATH)) {
+            std::string pin;
+            ifstream in(PIN_PATH);
+            in >> pin;
+            tcpComm->sendMessage(message::PIN_REQUEST_SUCCESS);
+            tcpComm->sendMessage(pin);
+        }
+        else
+            throw PinNotFoundException("PIN non trovato");
+    }
+    catch(PinNotFoundException e) {
+        cout << e.what() << endl;
+        tcpComm->sendMessage(message::PIN_REQUEST_FAILED);
+    }
 }
