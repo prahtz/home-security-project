@@ -9,6 +9,10 @@ output = hsp
 ifeq ($(MAKECMDGOALS), linux)
 sources = $(filter-out ./source/RCSwitch.cpp, $(wildcard ./source/*.cpp))
 libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl
+else ifeq ($(MAKECMDGOALS), linux_debug)
+debug = -g
+sources = $(filter-out ./source/RCSwitch.cpp, $(wildcard ./source/*.cpp))
+libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl
 else
 sources = $(filter-out ./source/RCSim.cpp, $(wildcard ./source/*.cpp))
 libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev
@@ -20,6 +24,9 @@ raspbian: $(sources)
 
 linux: $(sources)
 	$(CC) $(sources) -I$(headers) -I$(exceptions) -o $(output) $(libs)
+
+linux_debug: $(sources)
+	$(CC) $(debug) $(sources) -I$(headers) -I$(exceptions) -o $(output) $(libs)
 
 
 

@@ -3,6 +3,11 @@ list<string> Core::tokenList;
 
 Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &tokenList, &codeMap)
 {
+
+}
+
+void Core::startService()
+{
     Logger::log("Service started");
     setupKnownSensors();
     setupTokenList();
@@ -10,7 +15,7 @@ Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessag
     transmitterThread = thread(&Transmitter::startTransmittingProtocol, &transmitter);
     firebaseMessagesHandlerThread = thread(&FirebaseMessagesHandler::startService, &firebaseMessagesHandler);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
-};
+}
 
 void Core::updateCodeMap(DoorSensor *ds)
 {
@@ -128,16 +133,40 @@ void Core::registerNewDoorSensor(TCPComm *tcpComm)
     ds->setSensorID(getNewSensorID());
     ds->setSensorState(OPENED);
     ds->isCharged(true);
+    atomic<bool> abort = false, ack = false;
+    string sensorName;
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, sub, &tcpComm, &abort, &sensorName, &ack](string message) {
+        cout << "Register SUB: " << message << endl;
+        if (message == message::ABORT || message == message::FAIL)
+        {
+            abort = true;
+            statical::sharedCondition.notify_all();
+            sub->cancel();
+        }
+        else if (message == message::STRING_REQUEST)
+        {
+            ack = true;
+            tcpComm->sendMessage(message::ACK);
+        }
+        else if (ack && message.find(message::STRING) != string::npos)
+        {
+            message = message::clear_string_message(message);
+            sensorName = message;
+            statical::sharedCondition.notify_all();
+            sub->cancel();
+        }
+    });
+
     try
     {
-        registerCloseCode(tcpComm, ds);
-        registerOpenCode(tcpComm, ds);
-        registerSensorName(tcpComm, ds);
+        registerCloseCode(tcpComm, ds, abort);
+        registerOpenCode(tcpComm, ds, abort);
+        registerSensorName(tcpComm, ds, abort, sensorName);
     }
     catch (AbortException &e)
     {
         cout << e.what() << endl;
-        tcpComm->flush();
         eventHandler.registerCode = false;
         delete ds;
         return;
@@ -145,7 +174,7 @@ void Core::registerNewDoorSensor(TCPComm *tcpComm)
     catch (TimeOutException &e)
     {
         cout << e.what() << endl;
-        tcpComm->flush();
+        sub->cancel();
         tcpComm->sendMessage(message::TIME_OUT);
         eventHandler.registerCode = false;
         delete ds;
@@ -162,49 +191,39 @@ void Core::registerNewDoorSensor(TCPComm *tcpComm)
     tcpComm->sendMessage(message::REGISTER_SUCCESS);
 }
 
-void Core::registerCloseCode(TCPComm *tcpComm, DoorSensor *ds)
+void Core::registerCloseCode(TCPComm *tcpComm, DoorSensor *ds, atomic<bool> &abort)
 {
     eventHandler.registerCode = true;
     unique_lock<mutex> registerLock(statical::mSharedCondition);
-    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-        return (bool)eventHandler.codeArrived || tcpComm->isAvailable();
+    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm, &abort] {
+        return (bool)eventHandler.codeArrived || abort;
     });
 
-    if (tcpComm->isAvailable())
-    {
-        if (tcpComm->getMessage() == message::ABORT)
-            throw AbortException("Register sensor abort, first step.");
-        throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, first step.");
-    }
-    if (!notTimedOut)
+    if (abort)
+        throw AbortException("Register sensor abort, first step.");
+    else if (!notTimedOut)
         throw TimeOutException("Register sensor timed out, first step");
 
     eventHandler.codeArrived = false;
     code closeCode = eventHandler.newCode;
     ds->setCloseCode(closeCode);
-
     tcpComm->sendMessage(message::NEXT_CODE);
 }
 
-void Core::registerOpenCode(TCPComm *tcpComm, DoorSensor *ds)
+void Core::registerOpenCode(TCPComm *tcpComm, DoorSensor *ds, atomic<bool> &abort)
 {
     bool go = true;
     code openCode;
     unique_lock<mutex> registerLock(statical::mSharedCondition);
     while (go)
     {
-        bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-            return ((bool)eventHandler.codeArrived) || tcpComm->isAvailable();
+        bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm, &abort] {
+            return ((bool)eventHandler.codeArrived) || abort;
         });
 
-        if (tcpComm->isAvailable())
-        {
-            string m = tcpComm->getMessage();
-            if (m == message::ABORT)
-                throw AbortException("Register sensor abort, second step.");
-            throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, second step");
-        }
-        if (!notTimedOut)
+        if (abort)
+            throw AbortException("Register sensor abort, second step.");
+        else if (!notTimedOut)
             throw TimeOutException("Register sensor timed out, second step");
 
         eventHandler.codeArrived = false;
@@ -212,58 +231,38 @@ void Core::registerOpenCode(TCPComm *tcpComm, DoorSensor *ds)
         if (openCode != ds->getCloseCode())
         {
             ds->setOpenCode(openCode);
-            tcpComm->sendMessage(message::STRING);
+            tcpComm->sendMessage(message::STRING_REQUEST);
             go = false;
         }
     }
     eventHandler.registerCode = false;
 }
 
-void Core::registerSensorName(TCPComm *tcpComm, DoorSensor *ds)
+void Core::registerSensorName(TCPComm *tcpComm, DoorSensor *ds, atomic<bool> &abort, string &sensorName)
 {
     unique_lock<mutex> registerLock(statical::mSharedCondition);
-    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm] {
-        return tcpComm->isAvailable();
+    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &tcpComm, &abort, &sensorName] {
+        return !sensorName.empty() || abort;
     });
 
-    if (tcpComm->isAvailable())
-    {
-        string message = tcpComm->getMessage();
-        if (message == message::STRING)
-        {
-            tcpComm->sendMessage(message::ACK);
-            statical::sharedCondition.wait(registerLock, [this, &tcpComm] {
-                return tcpComm->isAvailable();
-            });
-            string sensorName = tcpComm->getMessage();
-            if (sensorName != message::FAIL && sensorName != message::ABORT && sensorName != message::STRING)
-            {
-                ds->setSensorName(sensorName);
-                ds->setBatteryLowCode(min(ds->getOpenCode(), ds->getCloseCode()));
-                ds->isEnabled(true);
-                ds->isCharged(true);
-                eventHandler.mSensorList.lock();
-                addSensorToList(ds);
-                eventHandler.mSensorList.unlock();
-                eventHandler.mFile.lock();
-                ofstream out(KNOWN_PATH, ios::app);
-                updateCodeMap(ds);
-                ds->writeToFile(out);
-                out.close();
-                eventHandler.mFile.unlock();
-            }
-            else
-                throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, third step, expected sensor name");
-        }
-        else if (message == message::ABORT)
-        {
-            throw AbortException("Register sensor abort, third step.");
-        }
-        else
-            throw UnexpectedMessageException("Messaggio ricevuto dall'applicazione inaspettato, third step, expected STRING");
-    }
-    else
+    if (abort)
+        throw AbortException("Register sensor abort, third step.");
+    else if (!notTimedOut)
         throw TimeOutException("Register sensor timed out, third step");
+
+    ds->setSensorName(sensorName);
+    ds->setBatteryLowCode(min(ds->getOpenCode(), ds->getCloseCode()));
+    ds->isEnabled(true);
+    ds->isCharged(true);
+    eventHandler.mSensorList.lock();
+    addSensorToList(ds);
+    eventHandler.mSensorList.unlock();
+    eventHandler.mFile.lock();
+    ofstream out(KNOWN_PATH, ios::app);
+    updateCodeMap(ds);
+    ds->writeToFile(out);
+    out.close();
+    eventHandler.mFile.unlock();
 }
 
 void Core::activateAlarm(TCPComm *tcpComm)
@@ -308,156 +307,229 @@ void Core::sensorList(TCPComm *tcpComm)
 {
     eventHandler.mSensorList.lock();
     for (Sensor *s : knownSensorList)
-        tcpComm->sendMessage(s->getSensorInfo());
+        tcpComm->sendMessage(message::STRING + s->getSensorInfo());
     eventHandler.mSensorList.unlock();
     tcpComm->sendMessage(message::END_SENSOR_LIST);
 }
 
-void Core::deactivateSensor(TCPComm *tcpComm, string message)
+void Core::deactivateSensor(TCPComm *tcpComm)
 {
-    int sensorID = stoi(message.substr(0, message.length() - message::DEACTIVATE_SENSOR.length() - SEPARATOR.length()));
-    eventHandler.mSensorList.lock();
-    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-    try
-    {
-        if (it != knownSensorList.end())
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, tcpComm, sub](string message) {
+        cout << "Deact SUB: " << message << endl;
+        if (message.find(message::STRING) != string::npos)
         {
-            if ((*it)->isEnabled())
+            message = message::clear_string_message(message);
+            mCore.lock();
+            int sensorID = stoi(message.substr(0, message.length() - message::DEACTIVATE_SENSOR.length() - SEPARATOR.length()));
+            eventHandler.mSensorList.lock();
+            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+            try
             {
-                (*it)->isEnabled(false);
-                eventHandler.updateKnownFile();
-                tcpComm->sendMessage(message::DEACTIVATE_SENSOR_SUCCESS);
-                Logger::log((*it)->getSensorInfo() + " deactivated");
-            }
-            else
-                throw SensorAlreadyDisabledException("Sensore già disabilitato!");
-        }
-        else
-        {
-            throw EnabledSensorNotFoundException("Sensore non trovato!");
-        }
-    }
-    catch (DisableSensorException &e)
-    {
-        cout << e.what() << endl;
-        tcpComm->sendMessage(message::DEACTIVATE_SENSOR_FAILED);
-    }
-    eventHandler.mSensorList.unlock();
-}
-
-void Core::activateSensor(TCPComm *tcpComm, string message)
-{
-    int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
-    eventHandler.mSensorList.lock();
-    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-    try
-    {
-        if (it != knownSensorList.end())
-        {
-            if (!(*it)->isEnabled())
-            {
-                if (eventHandler.alarmActivated && (*it)->getSensorState() == OPENED)
+                if (it != knownSensorList.end())
                 {
-                    throw SensorOpenedException("Sensore aperto con allarme attivo!");
+                    if ((*it)->isEnabled())
+                    {
+                        (*it)->isEnabled(false);
+                        eventHandler.updateKnownFile();
+                        tcpComm->sendMessage(message::DEACTIVATE_SENSOR_SUCCESS);
+                        Logger::log((*it)->getSensorInfo() + " deactivated");
+                    }
+                    else
+                        throw SensorAlreadyDisabledException("Sensore già disabilitato!");
                 }
-                (*it)->isEnabled(true);
-                eventHandler.updateKnownFile();
-                tcpComm->sendMessage(message::ACTIVATE_SENSOR_SUCCESS);
-                Logger::log((*it)->getSensorInfo() + " reactivated");
+                else
+                {
+                    throw EnabledSensorNotFoundException("Sensore non trovato!");
+                }
             }
-            else
-                throw SensorAlreadyEnabledException("Sensore già abilitato!");
-        }
-        else
-        {
-            throw DisabledSensorNotFoundException("Sensore non trovato!");
-        }
-    }
-    catch (EnableSensorException &e)
-    {
-        cout << e.what() << endl;
-        tcpComm->sendMessage(message::ACTIVATE_SENSOR_FAILED);
-    }
-    eventHandler.mSensorList.unlock();
-}
-
-void Core::removeSensor(TCPComm *tcpComm, string message)
-{
-    int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
-    eventHandler.mSensorList.lock();
-    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-
-    try
-    {
-        if (it != knownSensorList.end())
-        {
-            for (code sensorCode : (*it)->getCodeList())
-                codeMap.erase(sensorCode);
-            knownSensorList.erase(it);
-            eventHandler.updateKnownFile();
-            tcpComm->sendMessage(message::REMOVE_SENSOR_SUCCESS);
-            Logger::log((*it)->getSensorInfo() + " sensor removed");
-        }
-        else
-        {
-            throw SensorNotFoundException("Sensore non trovato!");
-        }
-    }
-    catch (RemoveSensorException &e)
-    {
-        cout << e.what() << endl;
-        tcpComm->sendMessage(message::REMOVE_SENSOR_FAILED);
-    }
-    eventHandler.mSensorList.unlock();
-}
-
-void Core::updateBattery(TCPComm *tcpComm, string message)
-{
-    int sensorID = stoi(message.substr(0, message.length() - message::UPDATE_BATTERY.length() - SEPARATOR.length()));
-    eventHandler.mSensorList.lock();
-    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-
-    try
-    {
-        if (it != knownSensorList.end())
-        {
-            if (!(*it)->isCharged())
+            catch (DisableSensorException &e)
             {
-                (*it)->isCharged(true);
-                eventHandler.updateKnownFile();
-                tcpComm->sendMessage(message::UPDATE_BATTERY_SUCCESS);
-                Logger::log((*it)->getSensorInfo() + " sensor recharged");
+                cout << e.what() << endl;
+                tcpComm->sendMessage(message::DEACTIVATE_SENSOR_FAILED);
             }
-            else
-            {
-                throw SensorChargedException("Sensore non scarico!");
-            }
+            eventHandler.mSensorList.unlock();
+            mCore.unlock();
+            sub->cancel();
         }
-        else
-        {
-            throw UpdateBatterySensorNotFoundException("Sensore non trovato!");
-        }
-    }
-    catch (UpdateBatteryException &e)
-    {
-        cout << e.what() << endl;
-        tcpComm->sendMessage(message::UPDATE_BATTERY_FAILED);
-    }
-    eventHandler.mSensorList.unlock();
+        else if (message == message::FAIL)
+            sub->cancel();
+    });
+    tcpComm->sendMessage(message::ACK);
 }
 
-void Core::handleFirebaseToken(string token)
+void Core::activateSensor(TCPComm *tcpComm)
 {
-    if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
-    {
-        FirebaseOperation *operation = new FirebaseOperation("add");
-        operation->addRegID(token);
-        cout << "Adding Token: " << token << endl;
-        firebaseMessagesHandler.addMessage(operation);
-        statical::newFirebaseNotification.notify_all();
-        tokenList.push_back(token);
-        updateTokenList();
-    }
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, tcpComm, sub](string message) {
+        cout << "Act SUB: " << message << endl;
+        if (message.find(message::STRING) != string::npos)
+        {
+            message = message::clear_string_message(message);
+            mCore.lock();
+            int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
+            eventHandler.mSensorList.lock();
+            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+            try
+            {
+                if (it != knownSensorList.end())
+                {
+                    if (!(*it)->isEnabled())
+                    {
+                        if (eventHandler.alarmActivated && (*it)->getSensorState() == OPENED)
+                        {
+                            throw SensorOpenedException("Sensore aperto con allarme attivo!");
+                        }
+                        (*it)->isEnabled(true);
+                        eventHandler.updateKnownFile();
+                        tcpComm->sendMessage(message::ACTIVATE_SENSOR_SUCCESS);
+                        Logger::log((*it)->getSensorInfo() + " reactivated");
+                    }
+                    else
+                        throw SensorAlreadyEnabledException("Sensore già abilitato!");
+                }
+                else
+                {
+                    throw DisabledSensorNotFoundException("Sensore non trovato!");
+                }
+            }
+            catch (EnableSensorException &e)
+            {
+                cout << e.what() << endl;
+                tcpComm->sendMessage(message::ACTIVATE_SENSOR_FAILED);
+            }
+            eventHandler.mSensorList.unlock();
+            mCore.unlock();
+            sub->cancel();
+        }
+        else if (message == message::FAIL)
+            sub->cancel();
+    });
+    tcpComm->sendMessage(message::ACK);
+}
+
+void Core::removeSensor(TCPComm *tcpComm)
+{
+    if(!pinCheck(tcpComm))
+        return;
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, tcpComm, sub](string message) {
+        cout << "Remove SUB: " << message << endl;
+        if (message.find(message::STRING) != string::npos)
+        {
+            message = message::clear_string_message(message);
+            mCore.lock();
+            int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
+            eventHandler.mSensorList.lock();
+            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+
+            try
+            {
+                if (it != knownSensorList.end())
+                {
+                    for (code sensorCode : (*it)->getCodeList())
+                        codeMap.erase(sensorCode);
+                    knownSensorList.erase(it);
+                    eventHandler.updateKnownFile();
+                    tcpComm->sendMessage(message::REMOVE_SENSOR_SUCCESS);
+                    Logger::log((*it)->getSensorInfo() + " sensor removed");
+                }
+                else
+                {
+                    throw SensorNotFoundException("Sensore non trovato!");
+                }
+            }
+            catch (RemoveSensorException &e)
+            {
+                cout << e.what() << endl;
+                tcpComm->sendMessage(message::REMOVE_SENSOR_FAILED);
+            }
+            eventHandler.mSensorList.unlock();
+            mCore.unlock();
+            sub->cancel();
+        }
+        else if (message == message::FAIL)
+            sub->cancel();
+    });
+    tcpComm->sendMessage(message::ACK);
+}
+
+void Core::updateBattery(TCPComm *tcpComm)
+{
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, tcpComm, sub](string message) {
+        cout << "Updt SUB: " << message << endl;
+        if (message.find(message::STRING) != string::npos)
+        {
+            message = message::clear_string_message(message);
+            mCore.lock();
+            int sensorID = stoi(message.substr(0, message.length() - message::UPDATE_BATTERY.length() - SEPARATOR.length()));
+            eventHandler.mSensorList.lock();
+            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
+            try
+            {
+                if (it != knownSensorList.end())
+                {
+                    if (!(*it)->isCharged())
+                    {
+                        (*it)->isCharged(true);
+                        eventHandler.updateKnownFile();
+                        tcpComm->sendMessage(message::UPDATE_BATTERY_SUCCESS);
+                        Logger::log((*it)->getSensorInfo() + " sensor recharged");
+                    }
+                    else
+                    {
+                        throw SensorChargedException("Sensore non scarico!");
+                    }
+                }
+                else
+                {
+                    throw UpdateBatterySensorNotFoundException("Sensore non trovato!");
+                }
+            }
+            catch (UpdateBatteryException &e)
+            {
+                cout << e.what() << endl;
+                tcpComm->sendMessage(message::UPDATE_BATTERY_FAILED);
+            }
+            eventHandler.mSensorList.unlock();
+            mCore.unlock();
+            sub->cancel();
+        }
+        else if (message == message::FAIL)
+            sub->cancel();
+    });
+    tcpComm->sendMessage(message::ACK);
+}
+
+void Core::handleFirebaseToken(TCPComm *tcpComm)
+{
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, sub, tcpComm](string token) {
+        cout << "FIREBASE SUB: " << token << endl;
+        if (token.find(message::STRING) != string::npos)
+        {
+            token = message::clear_string_message(token);
+            if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
+            {
+                mCore.lock();
+                FirebaseOperation *operation = new FirebaseOperation("add");
+                operation->addRegID(token);
+                cout << "Adding Token: " << token << endl;
+                firebaseMessagesHandler.addMessage(operation);
+                statical::newFirebaseNotification.notify_all();
+                tokenList.push_back(token);
+                updateTokenList();
+                mCore.unlock();
+            }
+            tcpComm->sendMessage(message::FIREBASE_TOKEN_RECEIVED);
+            Logger::log("New Firebase token received");
+            sub->cancel();
+        }
+        else if (token == message::FAIL)
+            sub->cancel();
+    });
+    tcpComm->sendMessage(message::ACK);
 }
 
 void Core::updateTokenList()
@@ -470,46 +542,212 @@ void Core::updateTokenList()
 
 void Core::setupNewPIN(TCPComm *tcpComm)
 {
-    try
-    {
-        if (!tcpComm->isAvailable())
+    Logger::log("Setup new PIN...");
+    string pin;
+
+    atomic<bool> abort = false, update = false, success = false;
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, sub, &tcpComm, &abort, &update, &success, &pin](string message) {
+        cout << "PIN Updt sub:" + message << endl;
+        if (message == message::ABORT || message == message::FAIL)
         {
-            unique_lock<mutex> authLock(statical::mSharedCondition);
-            bool notTimedOut = statical::sharedCondition.wait_for(authLock, chrono::seconds(30), [this, &tcpComm] {
-                return tcpComm->isAvailable();
-            });
-            if (!tcpComm->isAvailable())
+            abort = true;
+            statical::sharedCondition.notify_all();
+            sub->cancel();
+        }
+        else if (message.find(message::STRING) != string::npos)
+        {
+            message = message::clear_string_message(message);
+            if (update)
             {
-                throw PinTimeOutException("PIN non ricevuto in tempo");
+                ofstream out(PIN_PATH, ios::trunc);
+                out << message;
+                pin = message;
+                success = true;
+                out.close();
+                statical::sharedCondition.notify_all();
+                sub->cancel();
+            }
+            else
+            {
+                if (pin != message)
+                    tcpComm->sendMessage(message::PIN_CHECK_FAILED);
+                else
+                {
+                    tcpComm->sendMessage(message::PIN_CHECK_SUCCESS);
+                    update = true;
+                    statical::sharedCondition.notify_all();
+                }
             }
         }
-
-        string newPin = tcpComm->getMessage();
-        ofstream out(PIN_PATH, ios::trunc);
-        out << newPin << endl;
-        out.close();
-        tcpComm->sendMessage(message::UPDATE_PIN_SUCCESS);
-    }
-    catch(PinTimeOutException e) {
-        cout << e.what() << endl;
-        tcpComm->sendMessage(message::UPDATE_PIN_FAILED);
-    }
-}
-
-void Core::pinRequest(TCPComm* tcpComm) {
-    try {
-        if(std::filesystem::exists(PIN_PATH)) {
-            std::string pin;
+        else if (message == message::FAIL)
+            sub->cancel();
+    });
+    try
+    {
+        if (std::filesystem::exists(PIN_PATH))
+        {
             ifstream in(PIN_PATH);
-            in >> pin;
-            tcpComm->sendMessage(message::PIN_REQUEST_SUCCESS);
-            tcpComm->sendMessage(pin);
+            if (in.peek() != std::ifstream::traits_type::eof())
+                in >> pin;
+            else {
+                in.close();
+                throw PinNotFoundException("PIN non trovato");
+            }
+            in.close();
         }
         else
             throw PinNotFoundException("PIN non trovato");
+        tcpComm->sendMessage(message::ACK);
+        waitOnCondition(abort, update);
+        waitOnCondition(abort, success);
+    }
+    catch (PinNotFoundException e)
+    {
+        cout << e.what() << endl;
+        sub->cancel();
+        tcpComm->sendMessage(message::UPDATE_PIN_FAILED);
+        return;
+    }
+    catch (AbortException &e)
+    {
+        cout << e.what() << endl;
+        return;
+    }
+    catch (TimeOutException &e)
+    {
+        cout << e.what() << endl;
+        sub->cancel();
+        tcpComm->sendMessage(message::TIME_OUT);
+        return;
+    }
+    Logger::log("New PIN set");
+    tcpComm->sendMessage(message::UPDATE_PIN_SUCCESS);
+}
+
+void Core::waitOnCondition(atomic<bool> &abort, atomic<bool> &cond)
+{
+    unique_lock<mutex> registerLock(statical::mSharedCondition);
+    bool notTimedOut = statical::sharedCondition.wait_for(registerLock, chrono::seconds(30), [this, &abort, &cond] {
+        return abort || cond;
+    });
+    if (abort)
+        throw AbortException("Abort received");
+    else if (!notTimedOut)
+        throw TimeOutException("Timed out");
+}
+
+bool Core::pinCheck(TCPComm *tcpComm)
+{
+    atomic<bool> abort = false, success = false;
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, sub, tcpComm, &abort, &success](string message) {
+        cout << "PIN check SUB:" << message << endl;
+        if (message.find(message::STRING) != string::npos)
+        {
+            message = message::clear_string_message(message);
+            std::string pin;
+            ifstream in(PIN_PATH);
+            in >> pin;
+            if (pin != message)
+                tcpComm->sendMessage(message::PIN_CHECK_FAILED);
+            else {
+                tcpComm->sendMessage(message::PIN_CHECK_SUCCESS);
+                success = true;
+                statical::sharedCondition.notify_all();
+                sub->cancel();
+            }
+            in.close();
+        }
+        else if (message == message::ABORT || message == message::FAIL) {
+            abort = true;
+            statical::sharedCondition.notify_all();
+            sub->cancel();
+        }
+    });
+    try {
+        if (std::filesystem::exists(PIN_PATH))
+        {
+            ifstream in(PIN_PATH);
+            if (in.peek() == std::ifstream::traits_type::eof()) {
+                in.close();
+                throw PinNotFoundException("PIN non trovato");
+            }
+        }
+        else
+            throw PinNotFoundException("PIN non trovato");
+        tcpComm->sendMessage(message::ACK);
+        waitOnCondition(abort, success);
+    }
+    catch(AbortException e) {
+        cout << e.what() << endl;
+        sub->cancel();
+        return false;
+    }
+    catch(TimeOutException e) {
+        cout << e.what() << endl;
+        tcpComm->sendMessage(message::TIME_OUT);
+        sub->cancel();
+        return false;
     }
     catch(PinNotFoundException e) {
         cout << e.what() << endl;
-        tcpComm->sendMessage(message::PIN_REQUEST_FAILED);
+        tcpComm->sendMessage(message::PIN_CHECK_FAILED);
+        sub->cancel();
+        return false;
     }
+    Logger::log("PIN check success");
+    return true;
+}
+
+void Core::setupFirstPIN(TCPComm *tcpComm)
+{
+    atomic<bool> abort = false, success = false;
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen();
+    sub->onData([this, sub, tcpComm, &abort, &success](string message) {
+        cout << "PIN first setup SUB:" << message << endl;
+        if (message.find(message::STRING) != string::npos)
+        {
+            message = message::clear_string_message(message);
+            ofstream out(PIN_PATH, ios::trunc);
+            out << message;
+            out.close();
+            success = true;
+            statical::sharedCondition.notify_all();
+            sub->cancel();
+        }
+        else if (message == message::ABORT || message == message::FAIL) {
+            abort = true;
+            statical::sharedCondition.notify_all();
+            sub->cancel();
+        }
+    });
+    try {
+        if (std::filesystem::exists(PIN_PATH))
+        {
+            ifstream in(PIN_PATH);
+            if (in.peek() != std::ifstream::traits_type::eof()) {
+                tcpComm->sendMessage(message::PIN_FIRST_SETUP_FAILED);
+                sub->cancel();
+                in.close();
+                return;
+            }
+            in.close();
+        }
+        tcpComm->sendMessage(message::ACK);
+        waitOnCondition(abort, success);
+    }
+    catch(AbortException e) {
+        cout << e.what() << endl;
+        sub->cancel();
+        return;
+    }
+    catch(TimeOutException e) {
+        cout << e.what() << endl;
+        tcpComm->sendMessage(message::TIME_OUT);
+        sub->cancel();
+        return;
+    }
+    tcpComm->sendMessage(message::PIN_FIRST_SETUP_SUCCESS);
+    Logger::log("PIN set for the first time");
 }

@@ -10,6 +10,8 @@ static const std::string PATH = "./csv";
 static const std::string KNOWN_PATH = PATH + "/known.csv";
 static const std::string TOKEN_PATH = PATH + "/tokens.csv";
 static const std::string PIN_PATH = "./auth/pin";
+static const std::string AUTH_KEY_PATH = "./auth/auth_key";
+static const std::string ANDROID_GROUP_KEY_PATH = "./auth/android_group_key";
 static const std::string LOG_PATH = "./log";
 
 typedef unsigned long code;

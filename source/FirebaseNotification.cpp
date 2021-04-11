@@ -17,7 +17,6 @@ string FirebaseNotification::getTTL() {
 }
 
 string FirebaseNotification::getHttpBody() {
-    //return "{ \"notification\": {\n\"title\": \"" + title + "\",\n\"body\": \"" + body +"\"\n},\n\"to\" : \"" + token + "\"\n}";
     return "{ \"priority\": \"high\",\n\"data\": {\n\"n_type\": \"" + n_type + "\"\n\"click_action\": \"FLUTTER_NOTIFICATION_CLICK\"},  \"android\": { \"time_to_live\": \"" + ttl + "\" },\n\"to\" : \"" + token + "\"\n}";
 }
 

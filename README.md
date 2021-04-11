@@ -14,7 +14,7 @@ sudo apt install libcurlpp-dev
 
 Now you can simply run `make` or `make raspbian` to generate the executable file `hsp` in a Raspbian enviroment.
 
-If you are running it from any other Linux distribution, run `make linux`.
+If you are running it from any other Linux distribution, run `make linux` or `make linux_debug`.
 
 ## Run
 Once you compiled the executable, run this command:

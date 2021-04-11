@@ -11,16 +11,9 @@ class PinException : runtime_error{
 };
 
 
-class PinTimeOutException : public PinException{
-    public:
-    PinTimeOutException(const char* what) : PinException(what) {
-        Logger::log("EXCEPTION - Sensor not found while updating battery charge");
-    }
-};
-
 class PinNotFoundException : public PinException{
     public:
     PinNotFoundException(const char* what) : PinException(what) {
-        Logger::log("EXCEPTION - Sensor not found while updating battery charge");
+        Logger::log("EXCEPTION - PIN not found");
     }
 };

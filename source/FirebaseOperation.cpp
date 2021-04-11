@@ -1,8 +1,10 @@
 #include "FirebaseOperation.h"
-
 FirebaseOperation::FirebaseOperation(string operationType) : FirebaseMessage("https://fcm.googleapis.com/fcm/notification") {
     this->operationType = operationType;
     addHeaderEntry("project_id:" + projectId);
+    ifstream in(ANDROID_GROUP_KEY_PATH);
+    in >> notificationKey;
+    in.close();
 }
 
 string FirebaseOperation::getProjectId() {
