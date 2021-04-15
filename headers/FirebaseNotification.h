@@ -12,7 +12,7 @@ class FirebaseNotification: public FirebaseMessage{
         string body = "";
         string ttl = "120";
         string n_type = "";
-        string token = "APA91bFyPthniy3dbDzXVPAexa26XXSqcfL00xHY3_TNdoJELgADQ_Jw7BHieac7mIVY70duFaPhU-KkWHlTaWZ7ENmoAUevDxk-tw2oe0WdoOMG_-IPf6g";
+        string token = "";
     public:
         FirebaseNotification();
         string getBody();

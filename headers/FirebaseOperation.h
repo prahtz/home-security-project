@@ -12,7 +12,7 @@ class FirebaseOperation : public FirebaseMessage{
         list<string> regIDs;
         const string projectId = "749962426974";
         const string notificationKeyName = "androidDevices";
-        const string notificationKey = "APA91bFyPthniy3dbDzXVPAexa26XXSqcfL00xHY3_TNdoJELgADQ_Jw7BHieac7mIVY70duFaPhU-KkWHlTaWZ7ENmoAUevDxk-tw2oe0WdoOMG_-IPf6g";
+        string notificationKey = "";
 
         string toString(list<string> regIDs);
     public:

@@ -12,33 +12,25 @@
 
 #include <string>
 #include <list>
-#include <mutex>
-#include <atomic>
-#include <condition_variable>
 #include <iostream>
+#include <thread>
 
 #include "Definitions.h"
 #include "Message.h"
+#include "Stream.h"
+#include "Subscription.h"
 
 using namespace std;
 
 class TCPComm {
     private:
         int clientSocket;
-        list<string> messageBuffer;
-        
-        atomic<bool> messageAvailable;
-        mutex mMessageBuffer;
-
+        Stream<string> stream;
         void fillBuffer(char *buffer, string s);
     public:
-        static condition_variable sharedCondition;
-        static mutex mSharedCondition;
-        TCPComm(){};
         TCPComm(int clientSocket);
+        ~TCPComm();
         void startReceive();
+        Stream<string>* getMessageStream();
         void sendMessage(string message);
-        string getMessage();
-        bool isAvailable();
-        void flush();
 };

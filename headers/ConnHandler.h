@@ -21,9 +21,6 @@ class ConnHandler {
         string lan_IP;
         string port;
 
-        //static list<std::thread> clientThreads;
-        //static list<TCPComm*> tcpCommList;
-
         void setupServerSocket();
         void initClientSocket(int clientSocket);
         void startClientServerComunication();

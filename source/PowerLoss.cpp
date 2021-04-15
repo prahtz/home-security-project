@@ -24,7 +24,6 @@ void PowerLoss::callback() {
 
 void PowerLoss::sendNotifications() {
     for(string token : Core::tokenList) {
-            std::cout << token << std::endl;
             FirebaseNotification* notification = new FirebaseNotification();
             notification->setTitle("CORRENTE ASSENTE!");
             notification->setBody("Rilevata assenza di corrente presso la centralina.");

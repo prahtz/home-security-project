@@ -32,9 +32,21 @@ namespace message
     static const std::string UPDATE_BATTERY = "1B";
     static const std::string UPDATE_BATTERY_SUCCESS = "1C";
     static const std::string UPDATE_BATTERY_FAILED = "1D";
+    static const std::string UPDATE_PIN = "1E";
+    static const std::string UPDATE_PIN_SUCCESS = "1F";
+    static const std::string UPDATE_PIN_FAILED = "20";
+    static const std::string PIN_CHECK = "21";
+    static const std::string PIN_CHECK_SUCCESS = "22";
+    static const std::string PIN_CHECK_FAILED = "23";
+    static const std::string FIREBASE_TOKEN = "24";
+    static const std::string FIREBASE_TOKEN_RECEIVED = "25";
+    static const std::string STRING_REQUEST = "26";
+    static const std::string PIN_FIRST_SETUP = "27";
+    static const std::string PIN_FIRST_SETUP_SUCCESS = "28";
+    static const std::string PIN_FIRST_SETUP_FAILED = "29";
     static const std::string EOM = "//eom";
     static const std::string FAIL = "//null";
-
-    static const std::string STRING = "b";
+    static const std::string STRING = "//·";
+    static std::string clear_string_message(std::string msg) {return msg.substr(STRING.length());}
 }
 

@@ -1,4 +1,8 @@
 /.vscode/
-/csv/
+/csv/*
 hsp
 /log/
+/run.sh
+/auth/*
+!/csv/.gitkeep
+!/auth/.gitkeep

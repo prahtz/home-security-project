@@ -1,26 +1,32 @@
 #include "ConnHandler.h"
 
-ConnHandler::ConnHandler() {
+ConnHandler::ConnHandler()
+{
     setupServerSocket();
     startClientServerComunication();
 }
 
-ConnHandler::ConnHandler(string lan_IP, string port) {
+ConnHandler::ConnHandler(string lan_IP, string port)
+{
     this->lan_IP = lan_IP;
     this->port = port;
-    try{
-    setupServerSocket();
+    try
+    {
+        setupServerSocket();
+        core.startService();
+        startClientServerComunication();
     }
-    catch(exception e) {
+    catch (BindFailedException e)
+    {
         std::cout << e.what() << std::endl;
     }
-    startClientServerComunication();
 }
 
-void ConnHandler::setupServerSocket() {
+void ConnHandler::setupServerSocket()
+{
     struct sockaddr_in serv_addr, cli_addr;
     serverSocket = socket(DOMAIN, TRANSPORT, 0);
-    bzero((char *) &serv_addr, sizeof(serv_addr));
+    bzero((char *)&serv_addr, sizeof(serv_addr));
     int portno = atoi(port.c_str());
     struct linger l;
     l.l_onoff = 1;
@@ -31,47 +37,50 @@ void ConnHandler::setupServerSocket() {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(lan_IP.c_str());
     serv_addr.sin_port = htons(portno);
+    std::cout << this->lan_IP << " " << this->port << std::endl;
+    if (bind(serverSocket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+        throw BindFailedException("Bind failed");
 
-    if (bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        throw "Bind failed";
-    }
-    listen(serverSocket, MAX_CLIENTS);
+    if (listen(serverSocket, MAX_CLIENTS) < 0)
+        throw BindFailedException("Listen failed");
 }
 
-void ConnHandler::startClientServerComunication() {
+void ConnHandler::startClientServerComunication()
+{
     int i = 0;
-    while(true) {
+    while (true)
+    {
         int clientSocket = INVALID_SOCKET;
-        while(clientSocket == INVALID_SOCKET) 
+        while (clientSocket == INVALID_SOCKET)
             clientSocket = accept(serverSocket, NULL, NULL);
         initClientSocket(clientSocket);
-        TCPComm* tcpComm = new TCPComm(clientSocket);
+        list<future<void>>::iterator it = ClientUpdater::clientThreads.begin();
+        list<TCPComm *>::iterator itTCP = ClientUpdater::tcpCommList.begin();
+        while (it != ClientUpdater::clientThreads.end())
+        {
+            if (ClientUpdater::is_ready((*it)))
+            {
+                (*it).wait();
+                it = ClientUpdater::clientThreads.erase(it);
+                itTCP = ClientUpdater::tcpCommList.erase(itTCP);
+                i--;
+            }
+            else
+            {
+                ++it;
+                ++itTCP;
+            }
+        }
+
+        TCPComm *tcpComm = new TCPComm(clientSocket);
         ClientUpdater::clientThreads.push_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, tcpComm));
         ClientUpdater::tcpCommList.push_back(tcpComm);
-        i++;
-        if(i > MAX_CLIENTS) {
-            list<future<void>>::iterator it = ClientUpdater::clientThreads.begin();
-            list<TCPComm*>::iterator itTCP = ClientUpdater::tcpCommList.begin();
-            while(i >= MAX_CLIENTS) {
-                while(it != ClientUpdater::clientThreads.end()) {
-                    if(ClientUpdater::is_ready((*it))) {
-                        it = ClientUpdater::clientThreads.erase(it);
-                        itTCP = ClientUpdater::tcpCommList.erase(itTCP);
-                        i--;
-                    }
-                    else {
-                        ++it;
-                        ++itTCP;
-                    }
-                }
-            }
-                
-        }
     }
     closesocket(serverSocket);
 }
 
-void ConnHandler::initClientSocket(int clientSocket) {
+void ConnHandler::initClientSocket(int clientSocket)
+{
     int yes = 1;
     setsockopt(clientSocket, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));
     int idle = 1;
@@ -84,65 +93,40 @@ void ConnHandler::initClientSocket(int clientSocket) {
     setsockopt(clientSocket, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
 }
 
-void ConnHandler::clientThread(int clientSocket, TCPComm* tcpComm) {
-    string message;
-    thread tcpThread = thread(&TCPComm::startReceive, tcpComm);
-    do {
-        unique_lock<mutex> clientLock(statical::mSharedCondition);
-        statical::sharedCondition.wait(clientLock, [this, tcpComm] {
-            return tcpComm->isAvailable();
-        });
-        clientLock.unlock();
-        message = tcpComm->getMessage();
-        if(message == message::ACTIVATE_ALARM) {
-            mCore.lock();
+void ConnHandler::clientThread(int clientSocket, TCPComm *tcpComm)
+{
+    Subscription<string> *sub = tcpComm->getMessageStream()->listen([this, &tcpComm](string message) {
+        cout << "Main SUB: " << message << endl;
+        core.getMutex().lock();
+        if (message == message::ACTIVATE_ALARM)
             core.activateAlarm(tcpComm);
-            mCore.unlock();
-        }else if (message == message::DEACTIVATE_ALARM){
-            mCore.lock();
+        else if (message == message::DEACTIVATE_ALARM)
             core.deactivateAlarm(tcpComm);
-            mCore.unlock();
-        }else if (message == message::REGISTER_DOORSENSOR){
-            mCore.lock();
+        else if (message == message::REGISTER_DOORSENSOR)
             core.registerNewDoorSensor(tcpComm);
-            mCore.unlock();
-        }else if (message == message::SENSOR_LIST){
-            mCore.lock();
+        else if (message == message::SENSOR_LIST)
             core.sensorList(tcpComm);
-            mCore.unlock();
-        }
-        else if(message == message::INFO_REQUEST) {
-            mCore.lock();
+        else if (message == message::INFO_REQUEST)
             ClientUpdater::sendUpdatesToClients();
-            mCore.unlock();
+        else if (message == message::DEACTIVATE_SENSOR)
+            core.deactivateSensor(tcpComm);
+        else if (message == message::ACTIVATE_SENSOR)
+            core.activateSensor(tcpComm);
+        else if (message == message::REMOVE_SENSOR)
+            core.removeSensor(tcpComm);
+        else if (message == message::UPDATE_BATTERY)
+            core.updateBattery(tcpComm);
+        else if (message == message::FIREBASE_TOKEN)
+            core.handleFirebaseToken(tcpComm);
+        else if (message == message::UPDATE_PIN)
+            core.setupNewPIN(tcpComm);
+        else if(message == message::PIN_FIRST_SETUP){
+            core.setupFirstPIN(tcpComm);
         }
-        else if(message.length() >= message::DEACTIVATE_SENSOR.length() && message.substr(message.length() - message::DEACTIVATE_SENSOR.length(), message.length()) == message::DEACTIVATE_SENSOR) {
-            mCore.lock();
-            core.deactivateSensor(tcpComm, message);
-            mCore.unlock();
-        }
-        else if(message.length() >= message::ACTIVATE_SENSOR.length() && message.substr(message.length() - message::ACTIVATE_SENSOR.length(), message.length()) == message::ACTIVATE_SENSOR) {
-            mCore.lock();
-            core.activateSensor(tcpComm, message);
-            mCore.unlock();
-        }
-        else if(message.length() >= message::REMOVE_SENSOR.length() && message.substr(message.length() - message::REMOVE_SENSOR.length(), message.length()) == message::REMOVE_SENSOR) {
-            mCore.lock();
-            core.removeSensor(tcpComm, message);
-            mCore.unlock();
-        }
-        else if(message.length() >= message::UPDATE_BATTERY.length() && message.substr(message.length() - message::UPDATE_BATTERY.length(), message.length()) == message::UPDATE_BATTERY) {
-            mCore.lock();
-            core.updateBattery(tcpComm, message);
-            mCore.unlock();
-        }
-        else if(message != message::FAIL) {
-            mCore.lock();
-            core.handleFirebaseToken(message);
-            mCore.unlock();
-        }
-    }while(message != message::FAIL);
+        core.getMutex().unlock();
+    });
+    tcpComm->startReceive();
     closesocket(clientSocket);
-    tcpThread.join();
-    cout<<"Closing socket..."<<endl;
+    cout << "Closing socket..." << endl;
+    delete tcpComm;
 }
