@@ -23,7 +23,8 @@ void Transmitter::startTransmittingProtocol()
         codesBuffer.pop_back();
         switch(transmitMode) {
             case WAIT_FOR_ACK:
-                while (!isAckReceived())
+                TimeHandler::startTimer();
+                while (!isAckReceived() && TimeHandler::elapsedSeconds() < 30)
                 {
                     rc.send(transmittingCode, bitLength);
                     startTransmitting.wait_for(transmitterLock, chrono::milliseconds(transmitDelay), [this] { return isAckReceived(); });

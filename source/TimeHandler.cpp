@@ -53,3 +53,11 @@ bool TimeHandler::is30dayMonth(int mm) {
     return mm == 4 || mm == 6 || mm == 9 || mm == 11;
 }
 
+void TimeHandler::startTimer() {
+    TimeHandler::start = std::chrono::steady_clock::now();
+}
+
+int TimeHandler::elapsedSeconds() {
+    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - TimeHandler::start).count();
+}
+

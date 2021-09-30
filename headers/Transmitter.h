@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "Definitions.h"
 #include "TransmitMode.h"
+#include "TimeHandler.h"
 #include <atomic>
 #include <mutex>
 #include <iostream>
