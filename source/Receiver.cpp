@@ -13,6 +13,7 @@ void Receiver::startReceiving()
     stopReceive = false;
     while (!stopReceive)
     {
+        this_thread::sleep_for(std::chrono::milliseconds(1));
         if (rc.available())
         {
             code codeRecieved = rc.getReceivedValue();

@@ -11,6 +11,8 @@
 #include <atomic>
 #include <iostream>
 #include <unistd.h>
+#include <chrono>
+#include <thread>
 using namespace std;
 
 #define BUFFMAX 100
