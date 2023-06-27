@@ -1,7 +1,8 @@
 #include "FirebaseNotification.h"
 
-FirebaseNotification::FirebaseNotification() : FirebaseMessage("https://fcm.googleapis.com/fcm/send"){
-
+FirebaseNotification::FirebaseNotification() : FirebaseMessage(FIREBASE_NOTIFICATION_URL){
+    std::ifstream f(NOTIFICATION_BODY_PATH);
+    http_body = json::parse(f);
 }
 
 string FirebaseNotification::getTitle() {
@@ -17,7 +18,10 @@ string FirebaseNotification::getTTL() {
 }
 
 string FirebaseNotification::getHttpBody() {
-    return "{ \"priority\": \"high\",\n\"data\": {\n\"n_type\": \"" + n_type + "\"\n\"click_action\": \"FLUTTER_NOTIFICATION_CLICK\"},  \"android\": { \"time_to_live\": \"" + ttl + "\" },\n\"to\" : \"" + token + "\"\n}";
+    http_body["message"]["data"]["n_type"] = n_type;
+    http_body["message"]["token"] = token;
+    http_body["message"]["android"]["ttl"] = ttl;
+    return http_body.dump(4);
 }
 
 void FirebaseNotification::setTitle(string title) {

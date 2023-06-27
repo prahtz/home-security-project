@@ -8,14 +8,18 @@ output = hsp
 
 ifeq ($(MAKECMDGOALS), linux)
 sources = $(filter-out ./source/RCSwitch.cpp, $(wildcard ./source/*.cpp))
-libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl
+libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lssl -lcrypto -ljwt -lm
 else ifeq ($(MAKECMDGOALS), linux_debug)
 debug = -g
 sources = $(filter-out ./source/RCSwitch.cpp, $(wildcard ./source/*.cpp))
-libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl
+libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lssl -lcrypto -ljwt -lm
+else ifeq ($(MAKECMDGOALS), test)
+sources = $(filter-out ./source/RCSim.cpp, $(wildcard ./source/*.cpp))
+libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev -lssl -lcrypto -ljwt -lm
+CXXFLAGS = -DRPI
 else
 sources = $(filter-out ./source/RCSim.cpp, $(wildcard ./source/*.cpp))
-libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev
+libs = -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev -lssl -lcrypto -ljwt -lm
 CXXFLAGS = -DRPI
 endif
 
@@ -27,6 +31,9 @@ linux: $(sources)
 
 linux_debug: $(sources)
 	$(CC) $(debug) $(sources) -I$(headers) -I$(exceptions) -o $(output) $(libs)
+
+test: $(sources)
+	$(CC) $(CXXFLAGS) $(sources) -I$(headers) -I$(exceptions) -o test $(libs)
 
 
 

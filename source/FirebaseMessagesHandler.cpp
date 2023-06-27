@@ -12,27 +12,15 @@ void FirebaseMessagesHandler::startService() {
         statical::newFirebaseNotification.wait(lock, [this] () {return !messagesBuffer.empty();});
         FirebaseMessage* message = messagesBuffer.back();
         messagesBuffer.pop_back();
-        try
-        {
-            curlpp::Cleanup myCleanup;
-            curlpp::Easy myRequest;
-           
-            string httpBody = message->getHttpBody();
-            myRequest.setOpt<Url>(message->getUrl());
-            myRequest.setOpt<CaInfo>("./curl-ca-bundle.crt");
-            myRequest.setOpt<HttpHeader>(message->getHeader());
-            myRequest.setOpt<PostFields>(httpBody);
-            myRequest.setOpt<PostFieldSize>(httpBody.length());
-
-            myRequest.perform();
-        }
-        catch(curlpp::RuntimeError & e)
-        {
-            std::cout << e.what() << std::endl;
-        }
-        catch(curlpp::LogicError & e)
-        {
-            std::cout << e.what() << std::endl;
+        string oauthToken = oauth2.getToken();
+        message->addHeaderEntry("Authorization: Bearer " + oauthToken);
+        
+        json response = http_utils::sendPost(message->getUrl(), message->getHeader(), message->getHttpBody());
+        if (response.contains("error")) {
+            if (response["error"]["code"] == 404 || response["error"]["code"] == 400) {
+                json body = json::parse(message->getHttpBody());
+                string token = body["message"]["token"];
+            }
         }
         delete message;
     }

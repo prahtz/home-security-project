@@ -1,0 +1,13 @@
+{
+    "message": {
+        "token" : "",
+        "data": {
+            "n_type": "battery",
+            "click_action": "FLUTTER_NOTIFICATION_CLICK"
+        },
+        "android": {
+            "priority": "HIGH",
+            "ttl": "120s"
+        }
+    }
+}

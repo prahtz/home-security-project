@@ -8,6 +8,7 @@
 #include <curlpp/Exception.hpp>
 
 #include "FirebaseMessage.h"
+#include "OAuth2.hpp"
 
 using namespace curlpp::options;
 using namespace std;
@@ -15,6 +16,7 @@ using namespace std;
 class FirebaseMessagesHandler {
     private:
         static list<FirebaseMessage*> messagesBuffer;
+        OAuth2 oauth2;
     public:
         
         FirebaseMessagesHandler();

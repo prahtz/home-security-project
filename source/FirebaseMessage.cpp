@@ -1,16 +1,12 @@
 #include "FirebaseMessage.h"
 
 FirebaseMessage::FirebaseMessage(string url){
-    ifstream in(AUTH_KEY_PATH);
-    in >> authKey;
-    in.close();
-    header.push_back("Content-Type:application/json");
-    header.push_back("Authorization:key=" + authKey);
+    addHeaderEntry("Content-Type:application/json");
     this->url = url;
 }
 
 
-list<string> FirebaseMessage::getHeader() {
+list<string>& FirebaseMessage::getHeader() {
     return header;
 }
 

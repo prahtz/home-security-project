@@ -1,18 +1,23 @@
 #pragma once
 #include <string>
 #include <list>
+#include <fstream>
 #include "Definitions.h"
 #include "FirebaseMessage.h"
+#include <nlohmann/json.hpp>
 
 using namespace std;
+
+using json = nlohmann::json;
 
 class FirebaseNotification: public FirebaseMessage{
     private:
         string title = "";
         string body = "";
-        string ttl = "120";
+        string ttl = "120s";
         string n_type = "";
         string token = "";
+        json http_body;
     public:
         FirebaseNotification();
         string getBody();

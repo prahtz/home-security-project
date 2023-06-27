@@ -24,14 +24,14 @@ void PowerLoss::callback() {
 
 void PowerLoss::sendNotifications() {
     for(string token : Core::tokenList) {
-            FirebaseNotification* notification = new FirebaseNotification();
-            notification->setTitle("CORRENTE ASSENTE!");
-            notification->setBody("Rilevata assenza di corrente presso la centralina.");
-            notification->setToken(token);
-            notification->setTTL("18000");
-            notification->setNType("battery");
-            FirebaseMessagesHandler::addMessage(notification);
-            statical::newFirebaseNotification.notify_all();
+        FirebaseNotification* notification = new FirebaseNotification();
+        notification->setTitle("CORRENTE ASSENTE!");
+        notification->setBody("Rilevata assenza di corrente presso la centralina.");
+        notification->setToken(token);
+        notification->setTTL("18000s");
+        notification->setNType("battery");
+        FirebaseMessagesHandler::addMessage(notification);
     }
+    statical::newFirebaseNotification.notify_all();
     Logger::log("Power loss detected");
 }
