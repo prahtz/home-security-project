@@ -16,7 +16,6 @@
 #include "Action.h"
 #include "Exceptions.h"
 #include "TCPComm.h"
-#include "FirebaseOperation.h"
 #include "ClientUpdater.h"
 #include "Logger.h"
 

@@ -513,11 +513,7 @@ void Core::handleFirebaseToken(TCPComm *tcpComm)
             if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
             {
                 mCore.lock();
-                FirebaseOperation *operation = new FirebaseOperation("add");
-                operation->addRegID(token);
                 cout << "Adding Token: " << token << endl;
-                firebaseMessagesHandler.addMessage(operation);
-                statical::newFirebaseNotification.notify_all();
                 tokenList.push_back(token);
                 updateTokenList();
                 mCore.unlock();
