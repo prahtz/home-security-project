@@ -1,3 +1,4 @@
+#pragma once
 #include "RegisterNewSensorException.h"
 #include "DisableSensorException.h"
 #include "EnableSensorException.h"
@@ -5,4 +6,4 @@
 #include "UpdateBatteryException.h"
 #include "PinException.h"
 #include "BindFailedException.h"
-#include "Logger.h"
+#include "OAuth2Exception.h"

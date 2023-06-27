@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Logger.h"
 using namespace std;
 
 class PinException : runtime_error{

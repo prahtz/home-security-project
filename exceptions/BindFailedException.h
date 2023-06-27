@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Logger.h"
 using namespace std;
 
 class BindFailedException : runtime_error{
