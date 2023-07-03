@@ -6,5 +6,6 @@ hsp
 /auth/*
 /obj/
 /debug/
+/bin/
 !/csv/.gitkeep
 !/auth/.gitkeep
