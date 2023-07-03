@@ -1,7 +1,6 @@
 #include "Core.h"
-list<string> Core::tokenList;
 
-Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList, &tokenList, &codeMap)
+Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList ,&codeMap)
 {
 
 }
@@ -10,7 +9,7 @@ void Core::startService()
 {
     Logger::log("Service started");
     setupKnownSensors();
-    setupTokenList();
+    res::firebaseTokensHandler->setupTokenList();
     receiverThread = thread(&Receiver::startReceiving, &receiver);
     transmitterThread = thread(&Transmitter::startTransmittingProtocol, &transmitter);
     firebaseMessagesHandlerThread = thread(&FirebaseMessagesHandler::startService, &firebaseMessagesHandler);
@@ -65,23 +64,6 @@ void Core::setupKnownSensors()
     else
     {
         ofstream createdFile(KNOWN_PATH);
-        createdFile.close();
-    }
-};
-
-void Core::setupTokenList()
-{
-    ifstream readingFile(TOKEN_PATH);
-    string line;
-    if (readingFile.is_open())
-    {
-        while (getline(readingFile, line))
-            tokenList.push_back(line);
-        readingFile.close();
-    }
-    else
-    {
-        ofstream createdFile(TOKEN_PATH);
         createdFile.close();
     }
 };
@@ -510,14 +492,14 @@ void Core::handleFirebaseToken(TCPComm &tcpComm)
         if (token.find(message::STRING) != string::npos)
         {
             token = message::clear_string_message(token);
-            if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
-            {
-                mCore.lock();
-                cout << "Adding Token: " << token << endl;
-                tokenList.push_back(token);
-                updateTokenList();
-                mCore.unlock();
-            }
+            res::firebaseTokensHandler.with_lock([token](FirebaseTokensHandler &firebaseTokensHandler) {
+                list<string> &tokenList = firebaseTokensHandler.getTokenList();
+                if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
+                {
+                    cout << "Adding Token: " << token << endl;
+                    tokenList.push_back(token);
+                    firebaseTokensHandler.updateTokenList();
+                }
             });
             
             tcpComm.sendMessage(message::FIREBASE_TOKEN_RECEIVED);

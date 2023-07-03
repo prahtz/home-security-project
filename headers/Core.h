@@ -18,6 +18,7 @@
 #include "TCPComm.h"
 #include "ClientUpdater.h"
 #include "Logger.h"
+#include "CriticalSection.hpp"
 
 using namespace std;
 
@@ -35,8 +36,6 @@ class Core{
         mutex mCore;
 
         void setupKnownSensors();
-        void setupTokenList();
-        void updateTokenList();
         void updateCodeMap(DoorSensor* ds);
         int getNewSensorID();
         
@@ -50,7 +49,6 @@ class Core{
         Core();
         mutex& getMutex() {return mCore;};
         void startService();
-        static list<string> tokenList;
         bool addSensorToList(Sensor* s);
         bool removeSensorFromList(Sensor* s);
         void activateAlarm(TCPComm& tcpComm);

@@ -18,7 +18,7 @@ using namespace std;
 #define BUFFMAX 100
 
 class Receiver {
-    private:
+    protected:
         RCSwitch rc;
         atomic<bool> stopReceive;
         list<code> codesBuffer;

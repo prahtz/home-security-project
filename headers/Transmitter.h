@@ -19,7 +19,7 @@
 using namespace std;
 
 class Transmitter {
-    private:
+    protected:
         RCSwitch rc;
         int bitLength;
         unsigned long transmitDelay;

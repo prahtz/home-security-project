@@ -14,11 +14,10 @@ using namespace curlpp::options;
 using namespace std;
 
 class FirebaseMessagesHandler {
-    private:
+    protected:
         static list<FirebaseMessage*> messagesBuffer;
         OAuth2 oauth2;
     public:
-        
         FirebaseMessagesHandler();
         void startService();
         static void addMessage(FirebaseMessage* message);

@@ -26,6 +26,7 @@ class Sensor {
         void isEnabled(bool enabled);
         void isCharged(bool charged);
         bool isSensorReady();
+        bool operator==(Sensor s);
         virtual list<code> getCodeList() {return list<code>();}
         virtual void writeToFile(ofstream &out);
         virtual string getSensorInfo();

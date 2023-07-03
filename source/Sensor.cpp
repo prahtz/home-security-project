@@ -49,3 +49,7 @@ string Sensor::getSensorInfo() {
     return to_string(sensorID) + SEPARATOR + to_string(sensorState) + SEPARATOR + to_string(enabled) + SEPARATOR + to_string(charged);
 }
 
+bool Sensor::operator==(Sensor s) {
+    return getSensorID() == s.getSensorID();
+}
+

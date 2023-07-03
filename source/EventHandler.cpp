@@ -2,14 +2,13 @@
 
 atomic<bool> EventHandler::alarmActivated(false);
 
-EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler, list<Sensor *> *knownSensorList, list<string> *tokenList, map<code, pair<Action, Sensor *> *> *codeMap)
+EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler, list<Sensor *> *knownSensorList, map<code, pair<Action, Sensor *> *> *codeMap)
 {
     this->receiver = receiver;
     this->transmitter = transmitter;
     this->firebaseMessagesHandler = firebaseMessagesHandler;
     this->knownSensorList = knownSensorList;
     this->codeMap = codeMap;
-    this->tokenList = tokenList;
 
     registerCode = false;
     codeArrived = false;
@@ -171,13 +170,17 @@ void EventHandler::activateDefenses()
     else
         transmitter->mTransmit.unlock();
     
-    for(string token : *tokenList) {
-        FirebaseNotification* notification = new FirebaseNotification();
-        notification->setTitle("ALLARME ATTIVO");
-        notification->setBody("Intrusione rilevata!");
-        notification->setToken(token);
-        firebaseMessagesHandler->addMessage(notification);
-    }
+    res::firebaseTokensHandler.with_lock([this](FirebaseTokensHandler& firebaseTokensHandler){
+        list<string> &tokenList = firebaseTokensHandler.getTokenList();
+        for(string token : tokenList) {
+            FirebaseNotification* notification = new FirebaseNotification();
+            notification->setTitle("ALLARME ATTIVO");
+            notification->setBody("Intrusione rilevata!");
+            notification->setToken(token);
+            firebaseMessagesHandler->addMessage(notification);
+        }
+    });
+    
     statical::newFirebaseNotification.notify_all();
 }
 

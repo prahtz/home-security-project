@@ -16,10 +16,10 @@
 
 #include "FirebaseMessagesHandler.h"
 #include "FirebaseNotification.h"
-#include "Core.h"
+#include "CriticalSection.hpp"
 
 class PowerLoss {
-    private:
+    protected:
         static const int PIN = 22;
         static const int LOW_VALUE = 1;
         static void callback();
