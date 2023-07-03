@@ -4,5 +4,7 @@ hsp
 /log/
 /run.sh
 /auth/*
+/obj/
+/debug/
 !/csv/.gitkeep
 !/auth/.gitkeep
