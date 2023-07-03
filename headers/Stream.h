@@ -15,19 +15,21 @@ using namespace std;
 template <class T>
 class Stream {
     typedef std::function<void(T)> listener;
-    private:
+    protected:
         list<T> eventList;
-        list<Subscription<T>*> subscriptionList;
+        list<Subscription<T>> subscriptionList;
         thread thisThread;
-        atomic<bool> stopService = false;
+        atomic<bool> stop = false;
+        atomic<bool> threadJoined = false;
         condition_variable newEvent;
         mutex mEventList;
         mutex mSubscriptionList;
     public:
         Stream();
         ~Stream();
-        void add(T event);
-        void startService();
-        Subscription<T>* listen(listener f);
-        Subscription<T>* listen();
+        virtual void add(T event);
+        virtual void startService();
+        virtual void stopService();
+        virtual Subscription<T>& listen(listener f);
+        virtual Subscription<T>& listen();
 };

@@ -39,8 +39,8 @@ void TCPComm::startReceive() {
     }
 }
 
-Stream<string>* TCPComm::getMessageStream() {
-    return &stream;
+Stream<string>& TCPComm::getMessageStream() {
+    return stream;
 }
 
 void TCPComm::sendMessage(string message)

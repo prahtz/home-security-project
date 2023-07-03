@@ -47,7 +47,6 @@ void ConnHandler::setupServerSocket()
 
 void ConnHandler::startClientServerComunication()
 {
-    int i = 0;
     while (true)
     {
         int clientSocket = INVALID_SOCKET;
@@ -55,7 +54,7 @@ void ConnHandler::startClientServerComunication()
             clientSocket = accept(serverSocket, NULL, NULL);
         initClientSocket(clientSocket);
         list<future<void>>::iterator it = ClientUpdater::clientThreads.begin();
-        list<TCPComm *>::iterator itTCP = ClientUpdater::tcpCommList.begin();
+        list<TCPComm>::iterator itTCP = ClientUpdater::tcpCommList.begin();
         while (it != ClientUpdater::clientThreads.end())
         {
             if (ClientUpdater::is_ready((*it)))
@@ -63,7 +62,6 @@ void ConnHandler::startClientServerComunication()
                 (*it).wait();
                 it = ClientUpdater::clientThreads.erase(it);
                 itTCP = ClientUpdater::tcpCommList.erase(itTCP);
-                i--;
             }
             else
             {
@@ -71,10 +69,11 @@ void ConnHandler::startClientServerComunication()
                 ++itTCP;
             }
         }
-
-        TCPComm *tcpComm = new TCPComm(clientSocket);
-        ClientUpdater::clientThreads.push_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, tcpComm));
-        ClientUpdater::tcpCommList.push_back(tcpComm);
+        
+        ClientUpdater::tcpCommList.emplace_back(clientSocket);
+        TCPComm &tcpComm = ClientUpdater::tcpCommList.back();
+        ClientUpdater::clientThreads.emplace_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, std::ref(tcpComm)));
+        
     }
     closesocket(serverSocket);
 }
@@ -93,10 +92,9 @@ void ConnHandler::initClientSocket(int clientSocket)
     setsockopt(clientSocket, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
 }
 
-void ConnHandler::clientThread(int clientSocket, TCPComm *tcpComm)
+void ConnHandler::clientThread(int clientSocket, TCPComm &tcpComm)
 {
-    Subscription<string> *sub = tcpComm->getMessageStream()->listen([this, &tcpComm](string message) {
-        cout << "Main SUB: " << message << endl;
+    Subscription<string> &sub = tcpComm.getMessageStream().listen([this, &tcpComm](string message) {
         core.getMutex().lock();
         if (message == message::ACTIVATE_ALARM)
             core.activateAlarm(tcpComm);
@@ -125,8 +123,7 @@ void ConnHandler::clientThread(int clientSocket, TCPComm *tcpComm)
         }
         core.getMutex().unlock();
     });
-    tcpComm->startReceive();
+    tcpComm.startReceive();
     closesocket(clientSocket);
     cout << "Closing socket..." << endl;
-    delete tcpComm;
 }

@@ -12,7 +12,7 @@ using namespace std;
 class ClientUpdater {
     public:
         static list<future<void>> clientThreads;
-        static list<TCPComm*> tcpCommList;
+        static list<TCPComm> tcpCommList;
         static void sendUpdatesToClients();
         template<typename T>
         static bool is_ready(std::future<T> const &f) { 

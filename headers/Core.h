@@ -41,10 +41,10 @@ class Core{
         int getNewSensorID();
         
         void waitOnCondition(atomic<bool> &abort, atomic<bool> &cond);
-        void registerCloseCode(TCPComm* tcpComm, DoorSensor *ds, atomic<bool> &abort);
-        void registerOpenCode(TCPComm* tcpComm, DoorSensor *ds, atomic<bool> &abort);
-        void registerSensorName(TCPComm* tcpComm, DoorSensor *ds, atomic<bool> &abort, string &sensorName);
-        bool pinCheck(TCPComm* tcpComm);
+        void registerCloseCode(TCPComm& tcpComm, DoorSensor *ds, atomic<bool> &abort);
+        void registerOpenCode(TCPComm& tcpComm, DoorSensor *ds, atomic<bool> &abort);
+        void registerSensorName(TCPComm& tcpComm, DoorSensor *ds, atomic<bool> &abort, string &sensorName);
+        bool pinCheck(TCPComm& tcpComm);
 
     public:
         Core();
@@ -53,18 +53,18 @@ class Core{
         static list<string> tokenList;
         bool addSensorToList(Sensor* s);
         bool removeSensorFromList(Sensor* s);
-        void activateAlarm(TCPComm* tcpComm);
-        void deactivateAlarm(TCPComm* tcpComm);
-        void sensorList(TCPComm* tcpComm);
-        void updateBattery(TCPComm* tcpComm);
-        void removeSensor(TCPComm* tcpComm);
-        void deactivateSensor(TCPComm* tcpComm);
-        void activateSensor(TCPComm* tcpComm);
+        void activateAlarm(TCPComm& tcpComm);
+        void deactivateAlarm(TCPComm& tcpComm);
+        void sensorList(TCPComm& tcpComm);
+        void updateBattery(TCPComm& tcpComm);
+        void removeSensor(TCPComm& tcpComm);
+        void deactivateSensor(TCPComm& tcpComm);
+        void activateSensor(TCPComm& tcpComm);
         bool isAlarmReady();
-        void registerNewDoorSensor(TCPComm* tcpComm);
+        void registerNewDoorSensor(TCPComm& tcpComm);
         void writeSensorToFile(Sensor* s);
-        void handleFirebaseToken(TCPComm* tcpComm);
-        void setupNewPIN(TCPComm* tcpComm);
-        void setupFirstPIN(TCPComm *tcpComm);
+        void handleFirebaseToken(TCPComm& tcpComm);
+        void setupNewPIN(TCPComm& tcpComm);
+        void setupFirstPIN(TCPComm &tcpComm);
         
 };

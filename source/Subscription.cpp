@@ -35,6 +35,15 @@ void Subscription<T>::startService()
     }
 }
 
+template <typename T>
+void Subscription<T>::stopService() {
+    this->cancel();
+    if (!this->threadJoined) {
+        this->execution.wait();
+        this->threadJoined = true;
+    }
+}
+
 template<typename T>
 void Subscription<T>::add(T event) {
     lock_guard<mutex> eventLock(mEventList);
@@ -72,8 +81,7 @@ bool Subscription<T>::isCanceled()
 template <typename T>
 Subscription<T>::~Subscription()
 {
-    this->cancel();
-    this->execution.wait();
+    stopService();
 }
 
 template class Subscription<string>;

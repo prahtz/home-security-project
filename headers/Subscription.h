@@ -5,28 +5,31 @@
 #include <mutex>
 #include <list>
 #include <condition_variable>
+#include <iostream>
 using namespace std;
-
 
 template <typename T>
 class Subscription {
     typedef std::function<void(T)> listener;
-    private:
+    protected:
         atomic<bool> canceled = false;
+        atomic<bool> threadJoined = false;
         listener handler;
         future<void> execution;
         list<T> eventList;
         condition_variable newEvent;
         mutex mEventList;
         mutex mHandler;
-        void startService();
     public:
         Subscription<T> (listener handler);
         Subscription<T> ();
+        Subscription<T> (const Subscription<T>&){};
         ~Subscription<T>();
-        void onData(listener handler);
-        void add(T event);
-        void cancel();
-        bool isCanceled();
-        listener getOnData();
+        virtual void startService();
+        virtual void stopService();
+        virtual void onData(listener handler);
+        virtual void add(T event);
+        virtual void cancel();
+        virtual bool isCanceled();
+        virtual listener getOnData();
 };

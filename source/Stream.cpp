@@ -8,10 +8,10 @@ Stream<T>::Stream() {
 
 template <class T>
 void Stream<T>::startService() {
-    while(!stopService) {
+    while(!stop) {
         unique_lock<mutex> eventLock(mEventList);
         newEvent.wait(eventLock, [this] {
-            return !eventList.empty() || stopService;
+            return !eventList.empty() || stop;
         });
         if(eventList.empty())
             break;
@@ -19,18 +19,25 @@ void Stream<T>::startService() {
         eventList.pop_front();
         mSubscriptionList.lock();
         for (auto it = subscriptionList.begin(); it != subscriptionList.end(); ++it) {
-            if(!(*it)->isCanceled())
-                (*it)->add(event);
+            if(!(*it).isCanceled())
+                (*it).add(event);
             else {
-                delete (*it);
                 it = subscriptionList.erase(it);
                 it--;
             }
         }
         mSubscriptionList.unlock();
     }
-    for(Subscription<T>* s : subscriptionList)
-        delete s;
+}
+
+template <class T>
+void Stream<T>::stopService() {
+    stop = true;
+    newEvent.notify_all();
+    if (!threadJoined) {
+        thisThread.join();
+        threadJoined = true;
+    }
 }
 
 template <class T>
@@ -41,26 +48,26 @@ void Stream<T>::add(T event) {
 }
 
 template <class T>
-Subscription<T>* Stream<T>::listen(listener f) {
-    Subscription<T>* s = new Subscription(f);
+Subscription<T>& Stream<T>::listen(listener f) {
     mSubscriptionList.lock();
-    subscriptionList.push_back(s);
+    subscriptionList.emplace_back(f);
+    Subscription<T> &s = subscriptionList.back();
+    mSubscriptionList.unlock();
+    return s;
+}
+
+template <class T> 
+Subscription<T>& Stream<T>::listen() {
+    mSubscriptionList.lock();
+    subscriptionList.emplace_back();
+    Subscription<T> &s = subscriptionList.back();
     mSubscriptionList.unlock();
     return s;
 }
 
 template <class T>
-Subscription<T>* Stream<T>::listen() {
-    Subscription<T>* s = new Subscription<T>;
-    subscriptionList.push_back(s);
-    return s;
-}
-
-template <class T>
 Stream<T>::~Stream() {
-    stopService = true;
-    newEvent.notify_all();
-    thisThread.join();
+    stopService();
 }
 
 template class Stream<string>;

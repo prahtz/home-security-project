@@ -31,5 +31,5 @@ class ConnHandler {
     public:
         ConnHandler();
         ConnHandler(string lan_IP, string port);
-        void clientThread(int clientSocket, TCPComm* tcpComm); 
+        void clientThread(int clientSocket, TCPComm& tcpComm); 
 };

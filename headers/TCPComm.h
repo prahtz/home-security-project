@@ -23,14 +23,15 @@
 using namespace std;
 
 class TCPComm {
-    private:
+    protected:
         int clientSocket;
         Stream<string> stream;
         void fillBuffer(char *buffer, string s);
     public:
         TCPComm(int clientSocket);
+        TCPComm();
         ~TCPComm();
-        void startReceive();
-        Stream<string>* getMessageStream();
-        void sendMessage(string message);
+        virtual void startReceive();
+        virtual Stream<string>& getMessageStream();
+        virtual void sendMessage(string message);
 };
