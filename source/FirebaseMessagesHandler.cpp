@@ -20,6 +20,13 @@ void FirebaseMessagesHandler::startService() {
             if (response["error"]["code"] == 404 || response["error"]["code"] == 400) {
                 json body = json::parse(message->getHttpBody());
                 string token = body["message"]["token"];
+                critical_section::firebaseTokensHandler.with_lock<void>(
+                    [token](FirebaseTokensHandler& firebaseTokensHandler) {
+                        list<string>& tokenList = firebaseTokensHandler.getTokenList();
+                        tokenList.remove(token);
+                        firebaseTokensHandler.updateTokenList();
+                    }
+                );
             }
         }
         delete message;

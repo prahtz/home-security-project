@@ -9,6 +9,7 @@
 
 #include "FirebaseMessage.h"
 #include "OAuth2.hpp"
+#include "CriticalSection.hpp"
 
 using namespace curlpp::options;
 using namespace std;
