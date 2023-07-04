@@ -1,6 +1,6 @@
 #include "Core.h"
 
-Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler, &knownSensorList ,&codeMap)
+Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessagesHandler)
 {
 
 }
@@ -8,111 +8,30 @@ Core::Core() : receiver(), eventHandler(&receiver, &transmitter, &firebaseMessag
 void Core::startService()
 {
     Logger::log("Service started");
-    setupKnownSensors();
-    res::firebaseTokensHandler->setupTokenList();
+    critical_section::sensorsHandler->setupKnownSensors();
+    critical_section::firebaseTokensHandler->setupTokenList();
     receiverThread = thread(&Receiver::startReceiving, &receiver);
     transmitterThread = thread(&Transmitter::startTransmittingProtocol, &transmitter);
     firebaseMessagesHandlerThread = thread(&FirebaseMessagesHandler::startService, &firebaseMessagesHandler);
     eventHandlerThread = thread(&EventHandler::startListening, &eventHandler);
 }
 
-void Core::updateCodeMap(DoorSensor *ds)
-{
-    codeMap[ds->getOpenCode()] = new pair<Action, Sensor *>(OPEN, ds);
-    codeMap[ds->getCloseCode()] = new pair<Action, Sensor *>(CLOSE, ds);
-    codeMap[ds->getBatteryLowCode()] = new pair<Action, Sensor *>(BATTERY_LOW, ds);
-}
-
-void Core::setupKnownSensors()
-{
-    std::filesystem::create_directory(PATH);
-    ifstream readingFile(KNOWN_PATH);
-    string line;
-    if (readingFile.is_open())
-    {
-        while (getline(readingFile, line))
-        {
-            istringstream streamString(line);
-            string field;
-            getline(streamString, field, ';');
-            switch (stoi(field))
-            {
-            case DOOR_SENSOR:
-                DoorSensor *ds = new DoorSensor();
-                getline(streamString, field, ';');
-                ds->setSensorID(stoi(field));
-                getline(streamString, field, ';');
-                ds->setSensorState((State)stoi(field));
-                getline(streamString, field, ';');
-                ds->isEnabled((bool)stoi(field));
-                getline(streamString, field, ';');
-                ds->isCharged((bool)stoi(field));
-                getline(streamString, field, ';');
-                ds->setOpenCode(stoi(field));
-                getline(streamString, field, ';');
-                ds->setCloseCode(stoi(field));
-                getline(streamString, field);
-                ds->setSensorName(field);
-                ds->setBatteryLowCode(min(ds->getOpenCode(), ds->getCloseCode()));
-                knownSensorList.push_back(ds);
-                updateCodeMap(ds);
-                break;
-            }
-        }
-        readingFile.close();
-    }
-    else
-    {
-        ofstream createdFile(KNOWN_PATH);
-        createdFile.close();
-    }
-};
-
-bool Core::addSensorToList(Sensor *s)
-{
-    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
-    if (it == knownSensorList.end())
-    {
-        knownSensorList.push_back(s);
-        return true;
-    }
-    return false;
-};
-
-bool Core::removeSensorFromList(Sensor *s)
-{
-    int listSize = knownSensorList.size();
-    knownSensorList.remove_if([s](Sensor *sensor) { return sensor->getSensorID() == s->getSensorID(); });
-    if (listSize != knownSensorList.size())
-        return true;
-    return false;
-};
-
 bool Core::isAlarmReady()
 {
-    eventHandler.mSensorList.lock();
-    list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [](Sensor *s) { return !s->isSensorReady(); });
-    if (it == knownSensorList.end())
-    {
-        eventHandler.mSensorList.unlock();
-        return true;
-    }
-    eventHandler.mSensorList.unlock();
-    return false;
-}
-
-int Core::getNewSensorID()
-{
-    if (knownSensorList.empty())
-        return 0;
-    return (*(--knownSensorList.end()))->getSensorID() + 1;
+    return critical_section::sensorsHandler.with_lock<bool>([](SensorsHandler& sensorsHandler) {
+        list<Sensor*> sensorList = sensorsHandler.getSensorList();
+        list<Sensor *>::iterator it = std::find_if(sensorList.begin(), sensorList.end(), [](Sensor *s) { return !s->isSensorReady(); });
+        if (it == sensorList.end())
+            return true;
+        return false;
+    });
 }
 
 void Core::registerNewDoorSensor(TCPComm &tcpComm)
 {
     Logger::log("Registering new door sensor...");
     DoorSensor *ds = new DoorSensor();
-    ds->setSensorID(getNewSensorID());
+    ds->setSensorID(critical_section::sensorsHandler->getNewSensorID());
     ds->setSensorState(OPENED);
     ds->isCharged(true);
     atomic<bool> abort = false, ack = false;
@@ -236,15 +155,7 @@ void Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds, atomic<bool> &ab
     ds->setBatteryLowCode(min(ds->getOpenCode(), ds->getCloseCode()));
     ds->isEnabled(true);
     ds->isCharged(true);
-    eventHandler.mSensorList.lock();
-    addSensorToList(ds);
-    eventHandler.mSensorList.unlock();
-    eventHandler.mFile.lock();
-    ofstream out(KNOWN_PATH, ios::app);
-    updateCodeMap(ds);
-    ds->writeToFile(out);
-    out.close();
-    eventHandler.mFile.unlock();
+    critical_section::sensorsHandler->addSensorToList(ds);
 }
 
 void Core::activateAlarm(TCPComm &tcpComm)
@@ -287,11 +198,12 @@ void Core::deactivateAlarm(TCPComm &tcpComm)
 
 void Core::sensorList(TCPComm &tcpComm)
 {
-    eventHandler.mSensorList.lock();
-    for (Sensor *s : knownSensorList)
-        tcpComm.sendMessage(message::STRING + s->getSensorInfo());
-    eventHandler.mSensorList.unlock();
-    tcpComm.sendMessage(message::END_SENSOR_LIST);
+    critical_section::sensorsHandler.with_lock<void>([&tcpComm](SensorsHandler &sensorsHandler) {
+        list<Sensor*>& sensorList = sensorsHandler.getSensorList();
+        for (Sensor *s : sensorList)
+            tcpComm.sendMessage(message::STRING + s->getSensorInfo());
+        tcpComm.sendMessage(message::END_SENSOR_LIST);
+    });
 }
 
 void Core::deactivateSensor(TCPComm &tcpComm)
@@ -304,33 +216,39 @@ void Core::deactivateSensor(TCPComm &tcpComm)
             message = message::clear_string_message(message);
             mCore.lock();
             int sensorID = stoi(message.substr(0, message.length() - message::DEACTIVATE_SENSOR.length() - SEPARATOR.length()));
-            eventHandler.mSensorList.lock();
-            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-            try
-            {
-                if (it != knownSensorList.end())
+
+            critical_section::sensorsHandler.with_lock<void>([sensorID, &tcpComm](SensorsHandler &sensorsHandler) {
+                list<Sensor *>& sensorList = sensorsHandler.getSensorList();
+                list<Sensor *>::iterator it = std::find_if(
+                    sensorList.begin(), 
+                    sensorList.end(), 
+                    [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; }
+                );
+                try
                 {
-                    if ((*it)->isEnabled())
+                    if (it != sensorList.end())
                     {
-                        (*it)->isEnabled(false);
-                        eventHandler.updateKnownFile();
-                        tcpComm.sendMessage(message::DEACTIVATE_SENSOR_SUCCESS);
-                        Logger::log((*it)->getSensorInfo() + " deactivated");
+                        if ((*it)->isEnabled())
+                        {
+                            (*it)->isEnabled(false);
+                            sensorsHandler.updateKnownFile();
+                            tcpComm.sendMessage(message::DEACTIVATE_SENSOR_SUCCESS);
+                            Logger::log((*it)->getSensorInfo() + " deactivated");
+                        }
+                        else
+                            throw SensorAlreadyDisabledException("Sensore già disabilitato!");
                     }
                     else
-                        throw SensorAlreadyDisabledException("Sensore già disabilitato!");
+                    {
+                        throw EnabledSensorNotFoundException("Sensore non trovato!");
+                    }
                 }
-                else
+                catch (DisableSensorException &e)
                 {
-                    throw EnabledSensorNotFoundException("Sensore non trovato!");
+                    cout << e.what() << endl;
+                    tcpComm.sendMessage(message::DEACTIVATE_SENSOR_FAILED);
                 }
-            }
-            catch (DisableSensorException &e)
-            {
-                cout << e.what() << endl;
-                tcpComm.sendMessage(message::DEACTIVATE_SENSOR_FAILED);
-            }
-            eventHandler.mSensorList.unlock();
+            });
             mCore.unlock();
             sub.cancel();
         }
@@ -350,37 +268,42 @@ void Core::activateSensor(TCPComm &tcpComm)
             message = message::clear_string_message(message);
             mCore.lock();
             int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
-            eventHandler.mSensorList.lock();
-            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-            try
-            {
-                if (it != knownSensorList.end())
+            critical_section::sensorsHandler.with_lock<void>([this, sensorID, &tcpComm](SensorsHandler &sensorsHandler) {
+                list<Sensor *>& sensorList = sensorsHandler.getSensorList();
+                list<Sensor *>::iterator it = std::find_if(
+                    sensorList.begin(), 
+                    sensorList.end(), 
+                    [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; }
+                );
+                try
                 {
-                    if (!(*it)->isEnabled())
+                    if (it != sensorList.end())
                     {
-                        if (eventHandler.alarmActivated && (*it)->getSensorState() == OPENED)
+                        if (!(*it)->isEnabled())
                         {
-                            throw SensorOpenedException("Sensore aperto con allarme attivo!");
+                            if (eventHandler.alarmActivated && (*it)->getSensorState() == OPENED)
+                            {
+                                throw SensorOpenedException("Sensore aperto con allarme attivo!");
+                            }
+                            (*it)->isEnabled(true);
+                            sensorsHandler.updateKnownFile();
+                            tcpComm.sendMessage(message::ACTIVATE_SENSOR_SUCCESS);
+                            Logger::log((*it)->getSensorInfo() + " reactivated");
                         }
-                        (*it)->isEnabled(true);
-                        eventHandler.updateKnownFile();
-                        tcpComm.sendMessage(message::ACTIVATE_SENSOR_SUCCESS);
-                        Logger::log((*it)->getSensorInfo() + " reactivated");
+                        else
+                            throw SensorAlreadyEnabledException("Sensore già abilitato!");
                     }
                     else
-                        throw SensorAlreadyEnabledException("Sensore già abilitato!");
+                    {
+                        throw DisabledSensorNotFoundException("Sensore non trovato!");
+                    }
                 }
-                else
+                catch (EnableSensorException &e)
                 {
-                    throw DisabledSensorNotFoundException("Sensore non trovato!");
+                    cout << e.what() << endl;
+                    tcpComm.sendMessage(message::ACTIVATE_SENSOR_FAILED);
                 }
-            }
-            catch (EnableSensorException &e)
-            {
-                cout << e.what() << endl;
-                tcpComm.sendMessage(message::ACTIVATE_SENSOR_FAILED);
-            }
-            eventHandler.mSensorList.unlock();
+            });
             mCore.unlock();
             sub.cancel();
         }
@@ -402,19 +325,13 @@ void Core::removeSensor(TCPComm &tcpComm)
             message = message::clear_string_message(message);
             mCore.lock();
             int sensorID = stoi(message.substr(0, message.length() - message::ACTIVATE_SENSOR.length() - SEPARATOR.length()));
-            eventHandler.mSensorList.lock();
-            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-
             try
             {
-                if (it != knownSensorList.end())
+                bool removed = critical_section::sensorsHandler->removeSensorFromList(sensorID);
+                if (removed)
                 {
-                    for (code sensorCode : (*it)->getCodeList())
-                        codeMap.erase(sensorCode);
-                    knownSensorList.erase(it);
-                    eventHandler.updateKnownFile();
                     tcpComm.sendMessage(message::REMOVE_SENSOR_SUCCESS);
-                    Logger::log((*it)->getSensorInfo() + " sensor removed");
+                    Logger::log("Sensor " + std::to_string(sensorID) + " removed");
                 }
                 else
                 {
@@ -426,7 +343,6 @@ void Core::removeSensor(TCPComm &tcpComm)
                 cout << e.what() << endl;
                 tcpComm.sendMessage(message::REMOVE_SENSOR_FAILED);
             }
-            eventHandler.mSensorList.unlock();
             mCore.unlock();
             sub.cancel();
         }
@@ -446,35 +362,40 @@ void Core::updateBattery(TCPComm &tcpComm)
             message = message::clear_string_message(message);
             mCore.lock();
             int sensorID = stoi(message.substr(0, message.length() - message::UPDATE_BATTERY.length() - SEPARATOR.length()));
-            eventHandler.mSensorList.lock();
-            list<Sensor *>::iterator it = std::find_if(knownSensorList.begin(), knownSensorList.end(), [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
-            try
-            {
-                if (it != knownSensorList.end())
+            critical_section::sensorsHandler.with_lock<void>([sensorID, &tcpComm](SensorsHandler &sensorsHandler) {
+                list<Sensor *>& sensorList = sensorsHandler.getSensorList();
+                list<Sensor *>::iterator it = std::find_if(
+                    sensorList.begin(), 
+                    sensorList.end(), 
+                    [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; }
+                );
+                try
                 {
-                    if (!(*it)->isCharged())
+                    if (it != sensorList.end())
                     {
-                        (*it)->isCharged(true);
-                        eventHandler.updateKnownFile();
-                        tcpComm.sendMessage(message::UPDATE_BATTERY_SUCCESS);
-                        Logger::log((*it)->getSensorInfo() + " sensor recharged");
+                        if (!(*it)->isCharged())
+                        {
+                            (*it)->isCharged(true);
+                            sensorsHandler.updateKnownFile();
+                            tcpComm.sendMessage(message::UPDATE_BATTERY_SUCCESS);
+                            Logger::log((*it)->getSensorInfo() + " sensor recharged");
+                        }
+                        else
+                        {
+                            throw SensorChargedException("Sensore non scarico!");
+                        }
                     }
                     else
                     {
-                        throw SensorChargedException("Sensore non scarico!");
+                        throw UpdateBatterySensorNotFoundException("Sensore non trovato!");
                     }
                 }
-                else
+                catch (UpdateBatteryException &e)
                 {
-                    throw UpdateBatterySensorNotFoundException("Sensore non trovato!");
+                    cout << e.what() << endl;
+                    tcpComm.sendMessage(message::UPDATE_BATTERY_FAILED);
                 }
-            }
-            catch (UpdateBatteryException &e)
-            {
-                cout << e.what() << endl;
-                tcpComm.sendMessage(message::UPDATE_BATTERY_FAILED);
-            }
-            eventHandler.mSensorList.unlock();
+            });
             mCore.unlock();
             sub.cancel();
         }
@@ -492,7 +413,7 @@ void Core::handleFirebaseToken(TCPComm &tcpComm)
         if (token.find(message::STRING) != string::npos)
         {
             token = message::clear_string_message(token);
-            res::firebaseTokensHandler.with_lock([token](FirebaseTokensHandler &firebaseTokensHandler) {
+            critical_section::firebaseTokensHandler.with_lock<void>([token](FirebaseTokensHandler &firebaseTokensHandler) {
                 list<string> &tokenList = firebaseTokensHandler.getTokenList();
                 if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
                 {

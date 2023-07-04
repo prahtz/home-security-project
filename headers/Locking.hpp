@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <mutex>
 #include <list>
@@ -53,9 +55,9 @@ public:
         return CallProxy<T>(&_data, _mtx);
     }
     
-    void with_lock(std::function<void(T&)> f) {
-        _mtx.lock();
-        f(_data);
-        _mtx.unlock();
+    template <class R>
+    R with_lock(std::function<R(T&)> f) {
+        const std::lock_guard<std::recursive_mutex> lock(_mtx);
+        return static_cast<R>(f(_data));
     }
 };

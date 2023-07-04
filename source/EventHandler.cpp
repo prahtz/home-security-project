@@ -2,13 +2,11 @@
 
 atomic<bool> EventHandler::alarmActivated(false);
 
-EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler, list<Sensor *> *knownSensorList, map<code, pair<Action, Sensor *> *> *codeMap)
+EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler)
 {
     this->receiver = receiver;
     this->transmitter = transmitter;
     this->firebaseMessagesHandler = firebaseMessagesHandler;
-    this->knownSensorList = knownSensorList;
-    this->codeMap = codeMap;
 
     registerCode = false;
     codeArrived = false;
@@ -16,8 +14,6 @@ EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, Firebas
     defensesActivated = false;
 }
 
-
-//TO TEST
 void EventHandler::startListening()
 {
     while (true)
@@ -26,73 +22,68 @@ void EventHandler::startListening()
         receiver->codeAvailable.wait(receiverLock, [this] { return !receiver->isBufferEmpty(); });
 
         code codeReceived = receiver->popCodeFromBuffer();
-        map<code, pair<Action, Sensor *> *>::iterator mapIterator = codeMap->find(codeReceived);
-        bool sensorCode = codeMap->end() != mapIterator;
-        if (sensorCode)
-        {
-            Action action = mapIterator->second->first;
-            Sensor *sensor = mapIterator->second->second;
-            switch (action)
+        critical_section::sensorsHandler.with_lock<void>([this, codeReceived](SensorsHandler& sensorsHandler){
+            map<code, pair<Action, Sensor *> *>& codeMap = sensorsHandler.getCodeMap();
+            map<code, pair<Action, Sensor *> *>::iterator mapIterator = codeMap.find(codeReceived);
+            bool sensorCode = codeMap.end() != mapIterator;
+            if (sensorCode)
             {
-                case OPEN:
-                    onSensorOpen(sensor);
-                    break;
-                case CLOSE:
-                    onSensorClose(sensor);
-                    break;
-                case BATTERY_LOW:
-                    onSensorBatteryLow(sensor);
-                
+                Action action = mapIterator->second->first;
+                Sensor *sensor = mapIterator->second->second;
+                switch (action)
+                {
+                    case OPEN:
+                        onSensorOpen(sensor);
+                        break;
+                    case CLOSE:
+                        onSensorClose(sensor);
+                        break;
+                    case BATTERY_LOW:
+                        onSensorBatteryLow(sensor);
+                }
             }
-        }
-        else {
-            switch(codeReceived)
-            {
-                case ackActivateCode:
-                    onAckActivateCode();
-                    break;
-                case ackDeactivateCode:
-                    onAckDeactivateCode();
-                    break;
-                case tamperActiveCode:
-                    onTamperActiveCode();
-                    break;
-                default:
-                    if(!isTransmittingCode(codeReceived))
-                        onUnknownCode(codeReceived);
-                    
+            else {
+                switch(codeReceived)
+                {
+                    case ackActivateCode:
+                        onAckActivateCode();
+                        break;
+                    case ackDeactivateCode:
+                        onAckDeactivateCode();
+                        break;
+                    case tamperActiveCode:
+                        onTamperActiveCode();
+                        break;
+                    default:
+                        if(!isTransmittingCode(codeReceived))
+                            onUnknownCode(codeReceived);
+                }
             }
-        }
+        });
     }
 }
 
 void EventHandler::onSensorOpen(Sensor *sensor)
 {
-    mSensorList.lock();
     if (alarmActivated && sensor->isEnabled() && !defensesActivated) 
         activateDefenses();
     sensor->setSensorState(OPENED);
-    updateKnownFile();
+    critical_section::sensorsHandler->updateKnownFile();
     Logger::log(sensor->getSensorInfo() + ": received open code");
-    mSensorList.unlock();
 }
 
 void EventHandler::onSensorClose(Sensor *sensor)
 {
-    mSensorList.lock();
     sensor->setSensorState(CLOSED);
-    updateKnownFile();
+    critical_section::sensorsHandler->updateKnownFile();
     Logger::log(sensor->getSensorInfo() + ": received close code");
-    mSensorList.unlock();
 }
 
 void EventHandler::onSensorBatteryLow(Sensor *sensor)
 {
-    mSensorList.lock();
     sensor->isCharged(false);
-    updateKnownFile();
+    critical_section::sensorsHandler->updateKnownFile();
     Logger::log(sensor->getSensorInfo() + ": received battery low code");
-    mSensorList.unlock();
 }
 
 void EventHandler::onAckActivateCode() {
@@ -146,16 +137,6 @@ bool EventHandler::isTransmittingCode(code codeReceived) {
     || codeReceived == enableTamperCode;
 }
 
-void EventHandler::updateKnownFile()
-{
-    mFile.lock();
-    ofstream out(KNOWN_PATH, ios::trunc);
-    for (Sensor *s : (*knownSensorList))
-        s->writeToFile(out);
-    out.close();
-    mFile.unlock();
-}
-
 void EventHandler::activateDefenses()
 {
     Logger::log("Activating defenses!");
@@ -170,7 +151,7 @@ void EventHandler::activateDefenses()
     else
         transmitter->mTransmit.unlock();
     
-    res::firebaseTokensHandler.with_lock([this](FirebaseTokensHandler& firebaseTokensHandler){
+    critical_section::firebaseTokensHandler.with_lock<void>([this](FirebaseTokensHandler& firebaseTokensHandler){
         list<string> &tokenList = firebaseTokensHandler.getTokenList();
         for(string token : tokenList) {
             FirebaseNotification* notification = new FirebaseNotification();

@@ -2,7 +2,7 @@
 CC = gcc
 CXX ?= gcc
 CFLAGS := -std=c++17 -Iheaders/ -Iexceptions/
-CXXFLAGS := -DRPI 
+CXXFLAGS :=  
 DBGFLAGS := -g
 COBJFLAGS := $(CFLAGS) -c -MD
 LIBS := -lstdc++ -lstdc++fs -lpthread -lcrypt -lcurlpp -lcurl -lwiringPi -lwiringPiDev -lssl -lcrypto -ljwt -lm
@@ -15,7 +15,7 @@ DBG_PATH := debug
 TEST_PATH := tests
 
 # compile macros
-TARGET_NAME := prova
+TARGET_NAME := hsp
 TEST_TARGET_PREFIX := test
 ifeq ($(OS),Windows_NT)
 	TARGET_NAME := $(addsuffix .exe,$(TARGET_NAME))
@@ -27,7 +27,7 @@ TEST_TARGETS := $(patsubst $(TEST_PATH)/%.cpp, $(BIN_PATH)/%, $(foreach x, $(wil
 # src files & obj files
 SRC := $(foreach x, $(SRC_PATH), $(wildcard $(addprefix $(x)/*,.c*)))
 TEST := $(filter-out $(SRC_PATH)/Main.cpp, $(SRC))
-OBJ := $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC)))))
+OBJ := $(filter-out $(OBJ_PATH)/RCSim.o, $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC))))))
 OBJ_TEST := $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(TEST)))))
 OBJ_DEBUG := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC)))))
 
@@ -47,7 +47,7 @@ $(TARGET): $(OBJ)
 	$(CC) -o $@ $(OBJ) $(CFLAGS) $(LIBS)
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.c*
-	$(CC) $(COBJFLAGS) -o $@ $<
+	$(CC) -DRPI $(COBJFLAGS) -o $@ $<
 
 $(TEST_TARGETS): bin/%: $(OBJ_TEST) $(OBJ_PATH)/%.o
 	$(CC) -o $@ $(OBJ_TEST) $(OBJ_PATH)/$*.o $(CFLAGS) $(LIBS)
@@ -86,4 +86,5 @@ distclean:
 	@rm -f $(DISTCLEAN_LIST)
 
 -include $(OBJ:.o=.d)
+-include $(OBJ_DEBUG:.o=.d)
 -include $(OBJ_TEST:.o=.d)

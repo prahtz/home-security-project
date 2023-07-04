@@ -23,7 +23,7 @@ void PowerLoss::callback() {
 }
 
 void PowerLoss::sendNotifications() {
-    res::firebaseTokensHandler.with_lock([](FirebaseTokensHandler &firebaseTokensHandler){
+    critical_section::firebaseTokensHandler.with_lock<void>([](FirebaseTokensHandler &firebaseTokensHandler){
         list<string> tokenList = firebaseTokensHandler.getTokenList();
         for(string token : tokenList) {
             FirebaseNotification* notification = new FirebaseNotification();

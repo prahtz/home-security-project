@@ -11,7 +11,7 @@ class DoorSensor : public Sensor {
     public:
         DoorSensor();
         DoorSensor(int sensorID, State state, bool enabled, code openCode, code closeCode, string sensorName);
-        list<code> getCodeList();
+        list<pair<code, Action>> getCodeActionList() override;
         void setOpenCode(code openCode);
         void setCloseCode(code closeCode);
         void setBatteryLowCode(code batteryLowCode);
@@ -20,6 +20,6 @@ class DoorSensor : public Sensor {
         code getCloseCode();
         code getBatteryLowCode();
         string getSensorName();
-        virtual void writeToFile(ofstream &out);   
+        virtual void writeToFile(ofstream &out);
         virtual string getSensorInfo();   
 };

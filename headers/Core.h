@@ -25,8 +25,6 @@ using namespace std;
 class Core{
     private:
         atomic<bool> abortProcedure;
-        list<Sensor*> knownSensorList;
-        map<code, pair<Action, Sensor*>*> codeMap;
         Receiver receiver;
         Transmitter transmitter;
         FirebaseMessagesHandler firebaseMessagesHandler;
@@ -34,10 +32,6 @@ class Core{
         thread receiverThread, eventHandlerThread, transmitterThread, firebaseMessagesHandlerThread;
         list<string> messageBuffer;
         mutex mCore;
-
-        void setupKnownSensors();
-        void updateCodeMap(DoorSensor* ds);
-        int getNewSensorID();
         
         void waitOnCondition(atomic<bool> &abort, atomic<bool> &cond);
         void registerCloseCode(TCPComm& tcpComm, DoorSensor *ds, atomic<bool> &abort);
@@ -49,8 +43,6 @@ class Core{
         Core();
         mutex& getMutex() {return mCore;};
         void startService();
-        bool addSensorToList(Sensor* s);
-        bool removeSensorFromList(Sensor* s);
         void activateAlarm(TCPComm& tcpComm);
         void deactivateAlarm(TCPComm& tcpComm);
         void sensorList(TCPComm& tcpComm);
@@ -60,7 +52,6 @@ class Core{
         void activateSensor(TCPComm& tcpComm);
         bool isAlarmReady();
         void registerNewDoorSensor(TCPComm& tcpComm);
-        void writeSensorToFile(Sensor* s);
         void handleFirebaseToken(TCPComm& tcpComm);
         void setupNewPIN(TCPComm& tcpComm);
         void setupFirstPIN(TCPComm &tcpComm);

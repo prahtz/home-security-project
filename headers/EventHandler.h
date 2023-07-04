@@ -18,8 +18,6 @@ class EventHandler {
         Receiver* receiver;
         Transmitter* transmitter;
         FirebaseMessagesHandler* firebaseMessagesHandler;
-        list<Sensor*>* knownSensorList;
-        map<code, pair<Action, Sensor*>*>* codeMap;
   
         void onSensorOpen(Sensor* sensor);
         void onSensorClose(Sensor* sensor);
@@ -35,15 +33,11 @@ class EventHandler {
         static atomic<bool> alarmActivated;
 
         std::condition_variable codeAvailable, newCodeAvailable;
-        std::mutex mSensorList, mNewCode, mFile, mAlarm;
+        std::mutex mNewCode, mFile, mAlarm;
         atomic<bool> registerCode, codeArrived, defensesActivated;
         atomic<code> newCode;
 
         EventHandler(){}
-        EventHandler(Receiver* receiver, Transmitter* transmitter, FirebaseMessagesHandler* firebaseMessagesHandler, list<Sensor*>* knownSensorList, map<code, pair<Action, Sensor*>*>* codeMap);
-
-        void updateKnownFile();
+        EventHandler(Receiver* receiver, Transmitter* transmitter, FirebaseMessagesHandler* firebaseMessagesHandler);
         void startListening();
-
-
 };

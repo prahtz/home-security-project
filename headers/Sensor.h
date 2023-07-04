@@ -2,6 +2,7 @@
 #include "State.h"
 #include "SensorTypes.h"
 #include "Definitions.h"
+#include "Action.h"
 #include <list>
 #include <fstream>
 #include <iostream>
@@ -14,6 +15,7 @@ class Sensor {
         State sensorState;
         bool charged;
         bool enabled;
+        list<pair<code, Action>> codeActionList;
     public:
         Sensor() {};
         Sensor(int sensorID, State sensorState, bool enabled);
@@ -26,8 +28,8 @@ class Sensor {
         void isEnabled(bool enabled);
         void isCharged(bool charged);
         bool isSensorReady();
-        bool operator==(Sensor s);
-        virtual list<code> getCodeList() {return list<code>();}
+        bool operator==(Sensor& s);
+        virtual list<pair<code, Action>> getCodeActionList() = 0;
         virtual void writeToFile(ofstream &out);
         virtual string getSensorInfo();
         /*virtual bool isSensorReady();*/
