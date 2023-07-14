@@ -48,14 +48,17 @@ class OAuth2{
                 try {
                     string jwt = getJWT();
                     string httpBody = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=" + jwt;
-                    json response = http_utils::sendPost(url, header, httpBody);
-                    if (response.contains("access_token")) {
-                        token = response["access_token"];
-                        expiresIn = response["expires_in"];
-                        timeIssued = time(nullptr);
+                    string string_response = http_utils::sendPost(url, header, httpBody);
+                    if (json::accept(string_response)) {
+                        json response = json::parse(string_response);
+                        if (response.contains("access_token")) {
+                            token = response["access_token"];
+                            expiresIn = response["expires_in"];
+                            timeIssued = time(nullptr);
+                        }
+                        else
+                            throw OAuth2TokenNotReceivedException("OAuth2 request failed");
                     }
-                    else
-                        throw OAuth2TokenNotReceivedException("OAuth2 request failed");
                 }
                 catch (OAuth2TokenNotReceivedException e)
                 {

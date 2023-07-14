@@ -15,18 +15,21 @@ void FirebaseMessagesHandler::startService() {
         string oauthToken = oauth2.getToken();
         message->addHeaderEntry("Authorization: Bearer " + oauthToken);
         
-        json response = http_utils::sendPost(message->getUrl(), message->getHeader(), message->getHttpBody());
-        if (response.contains("error")) {
-            if (response["error"]["code"] == 404 || response["error"]["code"] == 400) {
-                json body = json::parse(message->getHttpBody());
-                string token = body["message"]["token"];
-                critical_section::firebaseTokensHandler.with_lock<void>(
-                    [token](FirebaseTokensHandler& firebaseTokensHandler) {
-                        list<string>& tokenList = firebaseTokensHandler.getTokenList();
-                        tokenList.remove(token);
-                        firebaseTokensHandler.updateTokenList();
-                    }
-                );
+        string string_response = http_utils::sendPost(message->getUrl(), message->getHeader(), message->getHttpBody());
+        if (json::accept(string_response)) {
+            json response = json::parse(string_response);
+            if (response.contains("error")) {
+                if (response["error"]["code"] == 404 || response["error"]["code"] == 400) {
+                    json body = json::parse(message->getHttpBody());
+                    string token = body["message"]["token"];
+                    critical_section::firebaseTokensHandler.with_lock<void>(
+                        [token](FirebaseTokensHandler& firebaseTokensHandler) {
+                            list<string>& tokenList = firebaseTokensHandler.getTokenList();
+                            tokenList.remove(token);
+                            firebaseTokensHandler.updateTokenList();
+                        }
+                    );
+                }
             }
         }
         delete message;

@@ -15,7 +15,7 @@ using namespace std;
 
 class http_utils {
     public:
-        static json sendPost(string url, list<string>& header, string httpBody) {
+        static string sendPost(string url, list<string>& header, string httpBody) {
             stringstream out;
             try
             {
@@ -39,7 +39,7 @@ class http_utils {
             {
                 std::cout << e.what() << std::endl;
             }
-            json response = json::parse(out);
+            string response = out.str();
             return response;
         }
 };
