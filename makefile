@@ -28,14 +28,16 @@ TEST_TARGETS := $(patsubst $(TEST_PATH)/%.cpp, $(BIN_PATH)/%, $(foreach x, $(wil
 SRC := $(foreach x, $(SRC_PATH), $(wildcard $(addprefix $(x)/*,.c*)))
 TEST := $(filter-out $(SRC_PATH)/Main.cpp, $(SRC))
 OBJ := $(filter-out $(OBJ_PATH)/RCSim.o, $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC))))))
-OBJ_TEST := $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(TEST)))))
+OBJ_TEST := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(TEST)))))
 OBJ_DEBUG := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC)))))
 
 # clean files list
 DISTCLEAN_LIST := $(OBJ) \
-                  $(OBJ_DEBUG)
+                  $(OBJ_DEBUG) \
+				  $(OBJ_TEST)
 CLEAN_LIST := $(TARGET) \
 			  $(TARGET_DEBUG) \
+			  $(TEST_TARGETS) \
 			  $(DISTCLEAN_LIST)
 
 # default rule
@@ -49,10 +51,10 @@ $(TARGET): $(OBJ)
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.c*
 	$(CC) -DRPI $(COBJFLAGS) -o $@ $<
 
-$(TEST_TARGETS): bin/%: $(OBJ_TEST) $(OBJ_PATH)/%.o
-	$(CC) -o $@ $(OBJ_TEST) $(OBJ_PATH)/$*.o $(CFLAGS) $(LIBS)
+$(TEST_TARGETS): bin/%: $(OBJ_TEST) $(DBG_PATH)/%.o
+	$(CC) -o $@ $(OBJ_TEST) $(DBG_PATH)/$*.o $(CFLAGS) $(LIBS)
 
-$(OBJ_PATH)/%.o: $(TEST_PATH)/%.c*
+$(DBG_PATH)/%.o: $(TEST_PATH)/%.c*
 	$(CC) $(COBJFLAGS) -o $@ $<
 
 $(DBG_PATH)/%.o: $(SRC_PATH)/%.c*

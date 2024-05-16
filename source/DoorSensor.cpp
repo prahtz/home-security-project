@@ -7,7 +7,6 @@ DoorSensor::DoorSensor() : Sensor() {
 DoorSensor::DoorSensor(int sensorID, State state, bool enabled, code openCode, code closeCode, string sensorName) : Sensor(sensorID, state, enabled){
     this->openCode = openCode;
     this->closeCode = closeCode;
-    this->batteryLowCode = min(openCode, closeCode) - BATTERY_LOW_SHIFT;
     this->sensorName = sensorName;
 }
 
@@ -15,7 +14,7 @@ list<pair<code, Action>> DoorSensor::getCodeActionList() {
     list<pair<code, Action>> codeActionList;
     codeActionList.push_front({closeCode, CLOSE});
     codeActionList.push_front({openCode, OPEN});
-    codeActionList.push_front({batteryLowCode, BATTERY_LOW});
+    codeActionList.push_front({getBatteryLowCode(), BATTERY_LOW});
     return codeActionList;
 }
 
@@ -30,9 +29,6 @@ void DoorSensor::setCloseCode(code closeCode) {
 void DoorSensor::setSensorName(string sensorName) {
     this->sensorName = sensorName;
 }
-void DoorSensor::setBatteryLowCode(code smallerCode) {
-    this->batteryLowCode = smallerCode - BATTERY_LOW_SHIFT;
-}
 
 code DoorSensor::getOpenCode() {
     return openCode;
@@ -42,7 +38,7 @@ code DoorSensor::getCloseCode() {
 }
 
 code DoorSensor::getBatteryLowCode() {
-    return batteryLowCode;
+    return min(openCode, closeCode) - BATTERY_LOW_SHIFT;
 }
 
 string DoorSensor::getSensorName() {

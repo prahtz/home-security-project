@@ -6,7 +6,6 @@ class DoorSensor : public Sensor {
     private:
         code openCode;
         code closeCode;
-        code batteryLowCode;
         string sensorName;
     public:
         DoorSensor();
@@ -14,7 +13,6 @@ class DoorSensor : public Sensor {
         list<pair<code, Action>> getCodeActionList() override;
         void setOpenCode(code openCode);
         void setCloseCode(code closeCode);
-        void setBatteryLowCode(code batteryLowCode);
         void setSensorName(string sensorName);
         code getOpenCode();
         code getCloseCode();
