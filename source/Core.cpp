@@ -151,6 +151,7 @@ void Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds, atomic<bool> &ab
     else if (!notTimedOut)
         throw TimeOutException("Register sensor timed out, third step");
 
+    ds->setSensorName(sensorName);
     ds->isEnabled(true);
     ds->isCharged(true);
     critical_section::sensorsHandler->addSensorToList(ds);
