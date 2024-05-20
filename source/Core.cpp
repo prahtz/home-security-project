@@ -408,7 +408,6 @@ void Core::handleFirebaseToken(TCPComm &tcpComm)
 {
     Subscription<string>& sub = tcpComm.getMessageStream().listen();
     sub.onData([this, &sub, &tcpComm](string token) {
-        cout << "FIREBASE SUB: " << token << endl;
         if (token.find(message::STRING) != string::npos)
         {
             token = message::clear_string_message(token);
@@ -416,14 +415,12 @@ void Core::handleFirebaseToken(TCPComm &tcpComm)
                 list<string> &tokenList = firebaseTokensHandler.getTokenList();
                 if (std::find(tokenList.begin(), tokenList.end(), token) == tokenList.end())
                 {
-                    cout << "Adding Token: " << token << endl;
+                    Logger::log("New Firebase token received: " + token);
                     tokenList.push_back(token);
                     firebaseTokensHandler.updateTokenList();
                 }
             });
-            
             tcpComm.sendMessage(message::FIREBASE_TOKEN_RECEIVED);
-            Logger::log("New Firebase token received");
             sub.cancel();
         }
         else if (token == message::FAIL)
