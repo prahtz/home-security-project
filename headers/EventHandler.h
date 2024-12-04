@@ -30,11 +30,11 @@ class EventHandler {
         void activateDefenses();
         
     public:
-        static atomic<bool> alarmActivated;
+        static atomic<bool> alarmActivated, defensesActivated;
 
         std::condition_variable codeAvailable, newCodeAvailable;
         std::mutex mNewCode, mFile, mAlarm;
-        atomic<bool> registerCode, codeArrived, defensesActivated;
+        atomic<bool> registerCode, codeArrived;
         atomic<code> newCode;
 
         EventHandler(){}

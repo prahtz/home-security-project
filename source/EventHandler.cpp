@@ -1,6 +1,7 @@
 #include "EventHandler.h"
 
 atomic<bool> EventHandler::alarmActivated(false);
+atomic<bool> EventHandler::defensesActivated(false);
 
 EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler)
 {
