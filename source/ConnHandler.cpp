@@ -53,7 +53,7 @@ void ConnHandler::startClientServerComunication()
         while (clientSocket == INVALID_SOCKET)
             clientSocket = accept(serverSocket, NULL, NULL);
         initClientSocket(clientSocket);
-        critical_section::clientUpdater.with_lock<void>([this, clientSocket](ClientUpdater& clientUpdater) {
+        critical_section::clientUpdater.with_lock<void>([this, clientSocket](ClientHandler& clientUpdater) {
             list<future<void>>::iterator it = clientUpdater.clientThreads.begin();
             list<TCPComm>::iterator itTCP = clientUpdater.tcpCommList.begin();
             while (it != clientUpdater.clientThreads.end())

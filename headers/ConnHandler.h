@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core.h"
-#include "ClientUpdater.h"
+#include "ClientHandler.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sstream>

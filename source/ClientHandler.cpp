@@ -1,10 +1,10 @@
-#include "ClientUpdater.h"
+#include "ClientHandler.h"
 
-ClientUpdater::ClientUpdater() {
+ClientHandler::ClientHandler() {
 
 }
 
-void ClientUpdater::sendUpdatesToClients() {
+void ClientHandler::sendUpdatesToClients() {
     list<string> messages = {critical_section::alarmActivated ? message::ALARM_ACTIVE : message::ALARM_INACTIVE, 
                             critical_section::defensesActivated ? message::DEFENSES_ACTIVE : message::DEFENSES_INACTIVE};
     list<future<void>>::iterator it = clientThreads.begin();

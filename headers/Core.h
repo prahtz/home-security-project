@@ -16,7 +16,7 @@
 #include "Action.h"
 #include "Exceptions.h"
 #include "TCPComm.h"
-#include "ClientUpdater.h"
+#include "ClientHandler.h"
 #include "Logger.h"
 #include "CriticalSection.h"
 

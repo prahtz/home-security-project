@@ -9,9 +9,9 @@
 
 using namespace std;
 
-class ClientUpdater {
+class ClientHandler {
     public:
-        ClientUpdater();
+        ClientHandler();
         list<future<void>> clientThreads;
         list<TCPComm> tcpCommList;
         void sendUpdatesToClients();
