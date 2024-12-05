@@ -18,7 +18,7 @@
 #include "TCPComm.h"
 #include "ClientUpdater.h"
 #include "Logger.h"
-#include "CriticalSection.hpp"
+#include "CriticalSection.h"
 
 using namespace std;
 

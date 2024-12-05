@@ -16,7 +16,7 @@
 
 #include "FirebaseMessagesHandler.h"
 #include "FirebaseNotification.h"
-#include "CriticalSection.hpp"
+#include "CriticalSection.h"
 
 class PowerLoss {
     protected:

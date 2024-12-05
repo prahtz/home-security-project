@@ -53,27 +53,28 @@ void ConnHandler::startClientServerComunication()
         while (clientSocket == INVALID_SOCKET)
             clientSocket = accept(serverSocket, NULL, NULL);
         initClientSocket(clientSocket);
-        list<future<void>>::iterator it = ClientUpdater::clientThreads.begin();
-        list<TCPComm>::iterator itTCP = ClientUpdater::tcpCommList.begin();
-        while (it != ClientUpdater::clientThreads.end())
-        {
-            if (ClientUpdater::is_ready((*it)))
+        critical_section::clientUpdater.with_lock<void>([this, clientSocket](ClientUpdater& clientUpdater) {
+            list<future<void>>::iterator it = clientUpdater.clientThreads.begin();
+            list<TCPComm>::iterator itTCP = clientUpdater.tcpCommList.begin();
+            while (it != clientUpdater.clientThreads.end())
             {
-                (*it).wait();
-                it = ClientUpdater::clientThreads.erase(it);
-                itTCP = ClientUpdater::tcpCommList.erase(itTCP);
+                if (clientUpdater.is_ready((*it)))
+                {
+                    (*it).wait();
+                    it = clientUpdater.clientThreads.erase(it);
+                    itTCP = clientUpdater.tcpCommList.erase(itTCP);
+                }
+                else
+                {
+                    ++it;
+                    ++itTCP;
+                }
             }
-            else
-            {
-                ++it;
-                ++itTCP;
-            }
-        }
-        
-        ClientUpdater::tcpCommList.emplace_back(clientSocket);
-        TCPComm &tcpComm = ClientUpdater::tcpCommList.back();
-        ClientUpdater::clientThreads.emplace_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, std::ref(tcpComm)));
-        
+            
+            clientUpdater.tcpCommList.emplace_back(clientSocket);
+            TCPComm &tcpComm = clientUpdater.tcpCommList.back();
+            clientUpdater.clientThreads.emplace_back(std::async(std::launch::async, &ConnHandler::clientThread, this, clientSocket, std::ref(tcpComm)));
+        });
     }
     closesocket(serverSocket);
 }
@@ -105,7 +106,7 @@ void ConnHandler::clientThread(int clientSocket, TCPComm &tcpComm)
         else if (message == message::SENSOR_LIST)
             core.sensorList(tcpComm);
         else if (message == message::INFO_REQUEST)
-            ClientUpdater::sendUpdatesToClients();
+            critical_section::clientUpdater->sendUpdatesToClients();
         else if (message == message::DEACTIVATE_SENSOR)
             core.deactivateSensor(tcpComm);
         else if (message == message::ACTIVATE_SENSOR)

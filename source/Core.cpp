@@ -159,9 +159,9 @@ void Core::registerSensorName(TCPComm &tcpComm, DoorSensor *ds, atomic<bool> &ab
 
 void Core::activateAlarm(TCPComm &tcpComm)
 {
-    if (isAlarmReady() && !eventHandler.alarmActivated && !eventHandler.defensesActivated)
+    if (isAlarmReady() && !critical_section::alarmActivated && !critical_section::defensesActivated)
     {
-        eventHandler.alarmActivated = true;
+        critical_section::alarmActivated = true;
         tcpComm.sendMessage(message::ACTIVATION_SUCCESS);
         Logger::log("Alarm activated");
     }
@@ -174,16 +174,16 @@ void Core::activateAlarm(TCPComm &tcpComm)
 
 void Core::deactivateAlarm(TCPComm &tcpComm)
 {
-    if (eventHandler.alarmActivated || eventHandler.defensesActivated)
+    if (critical_section::alarmActivated || critical_section::defensesActivated)
     {
-        eventHandler.alarmActivated = false;
-        if (eventHandler.defensesActivated)
+        critical_section::alarmActivated = false;
+        if (critical_section::defensesActivated)
         {
             transmitter.mTransmit.lock();
             transmitter.addTransmittingCode(deactivateSirenCode, WAIT_FOR_ACK);
             transmitter.mTransmit.unlock();
             transmitter.startTransmitting.notify_all();
-            eventHandler.defensesActivated = false;
+            critical_section::defensesActivated = false;
         }
         tcpComm.sendMessage(message::DEACTIVATION_SUCCESS);
         Logger::log("Alarm deactivated");
@@ -280,7 +280,7 @@ void Core::activateSensor(TCPComm &tcpComm)
                     {
                         if (!(*it)->isEnabled())
                         {
-                            if (eventHandler.alarmActivated && (*it)->getSensorState() == OPENED)
+                            if (critical_section::alarmActivated && (*it)->getSensorState() == OPENED)
                             {
                                 throw SensorOpenedException("Sensore aperto con allarme attivo!");
                             }

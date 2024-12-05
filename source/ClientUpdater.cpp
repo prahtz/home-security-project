@@ -1,11 +1,12 @@
 #include "ClientUpdater.h"
 
-list<future<void>> ClientUpdater::clientThreads;
-list<TCPComm> ClientUpdater::tcpCommList;
+ClientUpdater::ClientUpdater() {
+
+}
 
 void ClientUpdater::sendUpdatesToClients() {
-    list<string> messages = {EventHandler::alarmActivated ? message::ALARM_ACTIVE : message::ALARM_INACTIVE, 
-                            EventHandler::defensesActivated ? message::DEFENSES_ACTIVE : message::DEFENSES_INACTIVE};
+    list<string> messages = {critical_section::alarmActivated ? message::ALARM_ACTIVE : message::ALARM_INACTIVE, 
+                            critical_section::defensesActivated ? message::DEFENSES_ACTIVE : message::DEFENSES_INACTIVE};
     list<future<void>>::iterator it = clientThreads.begin();
     list<TCPComm>::iterator itTCP = tcpCommList.begin();
     while(it != clientThreads.end()) {

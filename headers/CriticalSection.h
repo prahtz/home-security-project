@@ -10,11 +10,16 @@
 #include "Locking.hpp"
 #include "FirebaseTokensHandler.hpp"
 #include "SensorsHandler.hpp"
+#include "ClientUpdater.h"
+
+class ClientUpdater;
 
 using namespace std;
 
 class critical_section {
     public:
-        static inline Locking<FirebaseTokensHandler> firebaseTokensHandler = Locking<FirebaseTokensHandler>(FirebaseTokensHandler {});
-        static inline Locking<SensorsHandler> sensorsHandler = Locking<SensorsHandler>(SensorsHandler {});
+        static Locking<FirebaseTokensHandler> firebaseTokensHandler;
+        static Locking<SensorsHandler> sensorsHandler;
+        static Locking<ClientUpdater> clientUpdater;
+        static atomic<bool> alarmActivated, defensesActivated;
 };

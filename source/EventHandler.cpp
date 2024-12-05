@@ -1,8 +1,5 @@
 #include "EventHandler.h"
 
-atomic<bool> EventHandler::alarmActivated(false);
-atomic<bool> EventHandler::defensesActivated(false);
-
 EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, FirebaseMessagesHandler *firebaseMessagesHandler)
 {
     this->receiver = receiver;
@@ -11,8 +8,6 @@ EventHandler::EventHandler(Receiver *receiver, Transmitter *transmitter, Firebas
 
     registerCode = false;
     codeArrived = false;
-    alarmActivated = false;
-    defensesActivated = false;
 }
 
 void EventHandler::startListening()
@@ -66,7 +61,7 @@ void EventHandler::startListening()
 
 void EventHandler::onSensorOpen(Sensor *sensor)
 {
-    if (alarmActivated && sensor->isEnabled() && !defensesActivated) 
+    if (critical_section::alarmActivated && sensor->isEnabled() && !critical_section::defensesActivated) 
         activateDefenses();
     sensor->setSensorState(OPENED);
     critical_section::sensorsHandler->updateKnownFile();
@@ -113,7 +108,7 @@ void EventHandler::onAckDeactivateCode() {
 
 void EventHandler::onTamperActiveCode() {
     transmitter->mTransmit.lock();
-    defensesActivated = true;
+    critical_section::defensesActivated = true;
     transmitter->addTransmittingCode(ackControlUnitCode, SEND_ACK);
     Logger::log("Tamper code received, sending ACK...");
     transmitter->mTransmit.unlock();
@@ -141,7 +136,8 @@ bool EventHandler::isTransmittingCode(code codeReceived) {
 void EventHandler::activateDefenses()
 {
     Logger::log("Activating defenses!");
-    defensesActivated = true;
+    critical_section::defensesActivated = true;
+    
     transmitter->mTransmit.lock();
     if(transmitter->getTransmittingCode() != activateSirenCode) {
         transmitter->addTransmittingCode(activateSirenCode, WAIT_FOR_ACK);
@@ -151,7 +147,6 @@ void EventHandler::activateDefenses()
     }
     else
         transmitter->mTransmit.unlock();
-    
     critical_section::firebaseTokensHandler.with_lock<void>([this](FirebaseTokensHandler& firebaseTokensHandler){
         list<string> &tokenList = firebaseTokensHandler.getTokenList();
         for(string token : tokenList) {
@@ -162,7 +157,8 @@ void EventHandler::activateDefenses()
             firebaseMessagesHandler->addMessage(notification);
         }
     });
-    
     statical::newFirebaseNotification.notify_all();
+    
+    critical_section::clientUpdater->sendUpdatesToClients();
 }
 

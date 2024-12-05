@@ -6,7 +6,7 @@
 #include "FirebaseMessagesHandler.h"
 #include "FirebaseNotification.h"
 #include "Logger.h"
-#include "CriticalSection.hpp"
+#include "CriticalSection.h"
 #include <map>
 #include <iostream>
 #include <algorithm>
@@ -30,8 +30,6 @@ class EventHandler {
         void activateDefenses();
         
     public:
-        static atomic<bool> alarmActivated, defensesActivated;
-
         std::condition_variable codeAvailable, newCodeAvailable;
         std::mutex mNewCode, mFile, mAlarm;
         atomic<bool> registerCode, codeArrived;
