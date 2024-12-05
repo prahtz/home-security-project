@@ -8,8 +8,8 @@
 #include <mutex>
 #include <condition_variable>
 #include "Locking.hpp"
-#include "FirebaseTokensHandler.hpp"
-#include "SensorsHandler.hpp"
+#include "FirebaseTokensHandler.h"
+#include "SensorsHandler.h"
 #include "ClientHandler.h"
 
 class ClientHandler;

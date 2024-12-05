@@ -8,7 +8,7 @@
 #include <curlpp/Exception.hpp>
 
 #include "FirebaseMessage.h"
-#include "OAuth2.hpp"
+#include "OAuth2.h"
 #include "CriticalSection.h"
 
 using namespace curlpp::options;
