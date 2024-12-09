@@ -80,9 +80,12 @@ bool SensorsHandler::removeSensorFromList(int sensorID)
         [sensorID](Sensor *sensor) { return sensor->getSensorID() == sensorID; });
     if (it != sensorList.end())
     {
-        for (pair<code, Action> codeActionPair : (*it)->getCodeActionList())
+        for (pair<code, Action> codeActionPair : (*it)->getCodeActionList()) {
+            delete codeMap[codeActionPair.first];
             codeMap.erase(codeActionPair.first);
+        }  
         sensorList.erase(it);
+        delete (*it);
         updateKnownFile();
         return true;
     }

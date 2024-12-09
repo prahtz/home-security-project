@@ -13,14 +13,13 @@ TCPComm::TCPComm(int clientSocket) {
 
 void TCPComm::startReceive() {
     string message = "";
-    char *buf = new char[BUFSIZ];
+    char buf[BUFSIZ];
     bool go = true;
     while(go) {
-        int r = recv(clientSocket, buf, sizeof(buf), 0);
+        int r = recv(clientSocket, &buf, sizeof(&buf), 0);
         if (r == 0 || r == SOCKET_ERROR)
         {
             stream.add(message::FAIL);
-            delete buf;
             go = false;
         }
         else {
@@ -45,9 +44,9 @@ Stream<string>& TCPComm::getMessageStream() {
 
 void TCPComm::sendMessage(string message)
 {
-    char *buf = new char[BUFSIZ];
+    char buf[BUFSIZ];
     fillBuffer(buf, message + message::EOM);
-    send(clientSocket, buf, message.length() + message::EOM.length(), 0);
+    send(clientSocket, &buf, message.length() + message::EOM.length(), 0);
 }
 
 TCPComm::~TCPComm() {
