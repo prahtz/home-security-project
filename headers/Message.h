@@ -46,6 +46,7 @@ namespace message
     static const std::string PIN_FIRST_SETUP_FAILED = "29";
     static const std::string DEFENSES_ACTIVE = "2A";
     static const std::string DEFENSES_INACTIVE = "2B";
+    static const std::string REPEATER_CODE = "//code";
     static const std::string EOM = "//eom";
     static const std::string FAIL = "//null";
     static const std::string STRING = "//·";

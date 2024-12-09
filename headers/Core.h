@@ -55,5 +55,6 @@ class Core{
         void handleFirebaseToken(TCPComm& tcpComm);
         void setupNewPIN(TCPComm& tcpComm);
         void setupFirstPIN(TCPComm &tcpComm);
+        void addRepeaterCode(string message);
         
 };

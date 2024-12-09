@@ -122,9 +122,11 @@ void ConnHandler::clientThread(int clientSocket, TCPComm &tcpComm)
         else if(message == message::PIN_FIRST_SETUP){
             core.setupFirstPIN(tcpComm);
         }
+        else if(message.find(message::REPEATER_CODE) != string::npos) {
+            core.addRepeaterCode(message);
+        }
         core.getMutex().unlock();
     });
     tcpComm.startReceive();
     closesocket(clientSocket);
-    cout << "Closing socket..." << endl;
 }

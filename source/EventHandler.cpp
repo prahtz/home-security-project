@@ -15,7 +15,7 @@ void EventHandler::startListening()
     while (true)
     {
         unique_lock<mutex> receiverLock(receiver->mBuff);
-        receiver->codeAvailable.wait(receiverLock, [this] { return !receiver->isBufferEmpty(); });
+        critical_section::codeAvailable.wait(receiverLock, [this] { return !receiver->isBufferEmpty(); });
 
         code codeReceived = receiver->popCodeFromBuffer();
         critical_section::sensorsHandler.with_lock<void>([this, codeReceived](SensorsHandler& sensorsHandler){

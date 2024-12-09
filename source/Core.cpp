@@ -640,3 +640,11 @@ void Core::setupFirstPIN(TCPComm &tcpComm)
     tcpComm.sendMessage(message::PIN_FIRST_SETUP_SUCCESS);
     Logger::log("PIN set for the first time");
 }
+
+void Core::addRepeaterCode(string message) {
+    message = message.substr(0, message.find(message::REPEATER_CODE));
+    code c = stoul(message);
+    cout << "Repeater code: " << c << endl;
+    critical_section::codesBuffer->push_front(c);
+    critical_section::codeAvailable.notify_all();
+}

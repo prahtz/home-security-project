@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <thread>
+#include "CriticalSection.h"
 using namespace std;
 
 #define BUFFMAX 100
@@ -21,9 +22,7 @@ class Receiver {
     protected:
         RCSwitch rc;
         atomic<bool> stopReceive;
-        list<code> codesBuffer;
     public:
-        condition_variable codeAvailable;
         mutex mBuff;
         Receiver();
         void startReceiving();   

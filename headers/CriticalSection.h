@@ -22,4 +22,6 @@ class critical_section {
         static Locking<SensorsHandler> sensorsHandler;
         static Locking<ClientHandler> clientUpdater;
         static atomic<bool> alarmActivated, defensesActivated;
+        static Locking<list<code>> codesBuffer;
+        static condition_variable codeAvailable;
 };
