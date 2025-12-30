@@ -79,6 +79,22 @@ void EventHandler::onSensorBatteryLow(Sensor *sensor)
 {
     sensor->isCharged(false);
     critical_section::sensorsHandler->updateKnownFile();
+    
+    critical_section::firebaseTokensHandler.with_lock<void>([sensor](FirebaseTokensHandler &firebaseTokensHandler){
+        list<string> tokenList = firebaseTokensHandler.getTokenList();
+        DoorSensor *ds = (DoorSensor*) sensor; 
+        for(string token : tokenList) {
+            FirebaseNotification* notification = new FirebaseNotification();
+            notification->setTitle("BATTERIA SCARICA!");
+            notification->setBody("Rilevata batteria scarica del sensore \"" + ds->getSensorName() + "\"");
+            notification->setToken(token);
+            notification->setTTL("18000s");
+            notification->setNType("battery_low");
+            FirebaseMessagesHandler::addMessage(notification);
+        }
+    });
+    
+    statical::newFirebaseNotification.notify_all();
     Logger::log(sensor->getSensorInfo() + ": received battery low code");
 }
 
@@ -153,6 +169,7 @@ void EventHandler::activateDefenses()
             FirebaseNotification* notification = new FirebaseNotification();
             notification->setTitle("ALLARME ATTIVO");
             notification->setBody("Intrusione rilevata!");
+            notification->setNType("alarm_activated");
             notification->setToken(token);
             firebaseMessagesHandler->addMessage(notification);
         }
