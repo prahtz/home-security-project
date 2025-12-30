@@ -18,6 +18,8 @@ string FirebaseNotification::getTTL() {
 }
 
 string FirebaseNotification::getHttpBody() {
+    http_body["message"]["data"]["title"] = title;
+    http_body["message"]["data"]["body"] = body;
     http_body["message"]["data"]["n_type"] = n_type;
     http_body["message"]["token"] = token;
     http_body["message"]["android"]["ttl"] = ttl;
